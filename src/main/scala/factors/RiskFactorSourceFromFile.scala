@@ -5,6 +5,7 @@ import java.time.LocalDate
 import org.apache.spark._
 import org.apache.log4j.Logger
 import main.scala.application.ApplicationContext
+import org.apache.spark.sql.types.DataTypes
 
 /**
  * Provide risk factor matrix as a DataFrame from from csv file
@@ -48,14 +49,26 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
       if (from.compareTo(to) > 0) {
         throw new IllegalArgumentException(s"The from date exceeded the to date: ${from}")
       } else {
-
+        
+        val fromDate = java.sql.Date.valueOf(from)
+        val toDate = java.sql.Date.valueOf(to)
+        val transformedDF = transform(df)
+        transformedDF.filter(transformedDF(sortColumn).geq(fromDate)).filter(transformedDF(sortColumn).leq(toDate))
       }
-
     } else {
-      df.filter(df("valueDate") >= from)
+      
+      val fromDate = java.sql.Date.valueOf(from)
+      val transformedDF = transform(df)
+      transformedDF.filter(transformedDF(sortColumn).geq(fromDate))
     }
+  }
 
-    head(1)
+  // TEMP. TODO: create Transform objects to handle df manipulation
+  private def transform(df: DataFrame): DataFrame = {
+
+    df.withColumn(s"${sortColumn}Conversion", df(sortColumn).cast(DataTypes.DateType))
+      .drop(sortColumn)
+      .withColumnRenamed(s"${sortColumn}Conversion", sortColumn)
   }
 
   def readDataFrameFromFile: DataFrame = {

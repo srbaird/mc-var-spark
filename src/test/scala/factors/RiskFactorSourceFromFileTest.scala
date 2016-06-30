@@ -117,7 +117,10 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
       instance.factors(fromDate, toDate)
     }
   }
-  
+
+  /**
+   * The test file is assumed to contain all rows after 01-Jan-2016
+   */
   test("test reading rows with a start date >= 01-Jan-2016") {
 
     val day = 1
@@ -126,6 +129,35 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
     val fromDate = LocalDate.of(year, month, day)
     val result = instance.factors(fromDate)
     assert(result.count() == testFileLength) // All 
+  }
+
+  /**
+   * The test file is assumed to contain some rows after 15-May-2016
+   */
+  test("test reading rows with a start date >= 15-May-2016") {
+
+    val expectedNumRows = 17L
+    val day = 15
+    val month = 5
+    val year = 2016
+    val fromDate = LocalDate.of(year, month, day)
+    val result = instance.factors(fromDate)
+    assert(result.count() == expectedNumRows)
+  }
+  
+    /**
+   * The test file is assumed to contain some rows between 01 and 02 May 2016
+   */
+  test("test reading rows with a between 01-May-2016 and 02-May-2016" ) {
+
+    val expectedNumRows = 2L
+    val day = 1
+    val month = 5
+    val year = 2016
+    val fromDate = LocalDate.of(year, month, day)
+    val toDate = LocalDate.of(year, month, day+1)
+    val result = instance.factors(fromDate, toDate)
+    assert(result.count() == expectedNumRows)
   }
 
   /**
