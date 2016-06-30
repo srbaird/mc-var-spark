@@ -11,9 +11,8 @@ import main.scala.application.ApplicationContext
  */
 case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[DataFrame] {
 
-
   val appContext = ApplicationContext.getContext
-  
+
   // Locate data
   val hdfsLocation = appContext.getString("riskFactor.hdfsLocation")
   val fileLocation = appContext.getString("riskFactor.fileLocation")
@@ -23,8 +22,11 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
   //
   private val sortColumn = "valueDate"
   //
-  private lazy val df = readDataFrameFromFile  
+  private lazy val df = readDataFrameFromFile
 
+  /**
+   * A positive non-zero number of rows must be supplied
+   */
   override def head(rows: Int): DataFrame = {
     if (rows < 1) {
       throw new IllegalArgumentException(s"The number of rows must be greater than zero: ${rows}")
@@ -32,7 +34,29 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
     df.sort(sortColumn).limit(rows)
   }
 
-  override def factors(from: LocalDate, to: LocalDate): DataFrame = head
+  /**
+   * From-date must not be greater than to date. If to-date is not supplied then all rows from the start date will be selected
+   */
+  override def factors(from: LocalDate, to: LocalDate = null): DataFrame = {
+
+    if (from == null) {
+      throw new IllegalArgumentException(s"An invalid start date was supplied: ${from}")
+    }
+
+    if (to != null) {
+
+      if (from.compareTo(to) > 0) {
+        throw new IllegalArgumentException(s"The from date exceeded the to date: ${from}")
+      } else {
+
+      }
+
+    } else {
+      df.filter(df("valueDate") >= from)
+    }
+
+    head(1)
+  }
 
   def readDataFrameFromFile: DataFrame = {
 
