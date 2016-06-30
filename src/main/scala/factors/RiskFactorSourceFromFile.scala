@@ -23,7 +23,7 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
   //
   private val sortColumn = "valueDate"
   //
-  private lazy val df = readDataFrameFromFile
+  private lazy val df = transform(readDataFrameFromFile)
 
   /**
    * A positive non-zero number of rows must be supplied
@@ -34,6 +34,8 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
     }
     df.sort(sortColumn).limit(rows)
   }
+
+  override def factors(): DataFrame = df
 
   /**
    * From-date must not be greater than to date. If to-date is not supplied then all rows from the start date will be selected
@@ -49,17 +51,15 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
       if (from.compareTo(to) > 0) {
         throw new IllegalArgumentException(s"The from date exceeded the to date: ${from}")
       } else {
-        
+
         val fromDate = java.sql.Date.valueOf(from)
         val toDate = java.sql.Date.valueOf(to)
-        val transformedDF = transform(df)
-        transformedDF.filter(transformedDF(sortColumn).geq(fromDate)).filter(transformedDF(sortColumn).leq(toDate))
+        df.filter(df(sortColumn).geq(fromDate)).filter(df(sortColumn).leq(toDate))
       }
     } else {
-      
+
       val fromDate = java.sql.Date.valueOf(from)
-      val transformedDF = transform(df)
-      transformedDF.filter(transformedDF(sortColumn).geq(fromDate))
+      df.filter(df(sortColumn).geq(fromDate))
     }
   }
 

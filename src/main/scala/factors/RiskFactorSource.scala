@@ -18,10 +18,15 @@ trait RiskFactorSource[T] {
   def head(rows: Int): T
 
   /**
+   * Return an n x n matrix of risk factors
+   */
+  def factors(): T
+
+  /**
    * Return an n x n matrix of risk factors starting at the supplied date
    */
   def factors(from: LocalDate): T = factors(from, null)
-  
+
   /**
    * Return an n x n matrix of risk factors between the supplied dates
    */

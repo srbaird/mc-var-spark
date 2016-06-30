@@ -19,7 +19,7 @@ import main.scala.application.ApplicationContext
 import java.time.LocalDate
 
 /**
- * Test the file-backed RiskFactorSource -> DataFrame
+ * Test the file-backed RiskFactorSource -> DataFrame. The tests are predicated on a file containing a months worth of data
  */
 class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { self: Suite =>
 
@@ -144,18 +144,18 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
     val result = instance.factors(fromDate)
     assert(result.count() == expectedNumRows)
   }
-  
-    /**
+
+  /**
    * The test file is assumed to contain some rows between 01 and 02 May 2016
    */
-  test("test reading rows with a between 01-May-2016 and 02-May-2016" ) {
+  test("test reading rows with a between 01-May-2016 and 02-May-2016") {
 
     val expectedNumRows = 2L
     val day = 1
     val month = 5
     val year = 2016
     val fromDate = LocalDate.of(year, month, day)
-    val toDate = LocalDate.of(year, month, day+1)
+    val toDate = LocalDate.of(year, month, day + 1)
     val result = instance.factors(fromDate, toDate)
     assert(result.count() == expectedNumRows)
   }
