@@ -15,14 +15,20 @@ class ValueDateTransformer(override val uid: String) extends Transformer {
 
   def this() = this(Identifiable.randomUID("vdt"))
 
-  private var _columnName = "valueDate"
+  private var _columnName: String = "valueDate"
 
   def columnName = _columnName
 
   /**
    * Set the name of the column to be transformed. The default value is "valueDate"
    */
-  def columnName(n: String) = _columnName = n
+  def columnName(n: String) = {
+
+    if (n == null || n.isEmpty()) {
+      throw new IllegalArgumentException(s"The column name was invalid: ${n}")
+    }
+    _columnName = n
+  }
 
   private val tempColSuffix = Identifiable.randomUID("tempColSuffix")
 
@@ -43,10 +49,11 @@ class ValueDateTransformer(override val uid: String) extends Transformer {
    */
   override def transformSchema(schema: StructType): StructType = {
 
+    val stableIdentifier = _columnName
+
     StructType(schema.map { sf =>
       sf match {
-
-        case StructField(_columnName, dataType, nullable, metadata) => StructField(_columnName, DataTypes.DateType, nullable, metadata)
+        case StructField(`stableIdentifier`, dataType, nullable, metadata) => StructField(`stableIdentifier`, DataTypes.DateType, nullable, metadata)
         case _ => sf
       }
     })

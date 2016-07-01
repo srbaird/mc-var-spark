@@ -2,17 +2,13 @@ package test.scala.factors
 
 import org.apache.spark.LocalSparkContext
 import org.apache.spark.sql.DataFrame
-import org.junit.runner.RunWith
-import org.scalatest.Finders
 import org.scalatest.FunSuite
 import org.scalatest.Suite
 import org.scalatest.Suite
-import org.scalatest.junit.JUnitRunner
 import main.scala.factors.RiskFactorSource
 import main.scala.factors.RiskFactorSourceFromFile
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
-import org.scalatest.mock.MockitoSugar
 import java.io.PrintWriter
 import java.io.File
 import main.scala.application.ApplicationContext
