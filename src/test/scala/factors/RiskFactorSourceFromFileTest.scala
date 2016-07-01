@@ -25,7 +25,7 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
 
   var instance: RiskFactorSource[DataFrame] = _
 
-  // Test file details
+  // Test file details. Some of the test conditions are linked to the contents
   val hdfsLocation = "\"hdfs://localhost:54310\""
   val fileLocation = "\"/project/test/initial-testing/\""
   val factorsFileName = "\"factors.clean.may2016.csv\""
@@ -34,7 +34,7 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
   // TODO: Needs to be pulled to a superclass
   override def beforeAll(): Unit = {
 
-    // Create he Spark Context for the test suite
+    // Create the Spark Context for the test suite
     sc = new SparkContext("local[4]", "RiskFactorSourceFromFileTest", new SparkConf(false))
 
     // Create a temporary config file to specify the test data to use
@@ -76,7 +76,7 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
     }
   }
   /**
-   * The test file is assumed to have at least one row in it
+   * The test file is assumed to have at least one row in it. The assertion of content is dependent on the file
    */
   test("test reading a single row") {
 
@@ -100,6 +100,14 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
     intercept[IllegalArgumentException] {
       instance.factors(null)
     }
+  }
+  
+  /**
+   * Return all rows in the file
+   */
+  test("test reading all rows ") {
+    val result = instance.factors()
+    assert(result.count() == testFileLength) // Test file has only 31 rows
   }
 
   /**
