@@ -7,11 +7,25 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.DataType
+import java.time.LocalDate
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.Row
 
 class ValueDateTransformerTest extends SparkTestBase {
 
   var instance: ValueDateTransformer = _
+  var sqlc: SQLContext = _
 
+  override def beforeAll(): Unit = {
+
+    super.beforeAll()
+    // Create the SQL context for data frame generation
+    sqlc = new SQLContext(sc)
+
+  }
   override def beforeEach() {
 
     instance = new ValueDateTransformer()
@@ -116,8 +130,39 @@ class ValueDateTransformerTest extends SparkTestBase {
     assert(result(result.fieldIndex(fieldName)).dataType == expectedDataType)
   }
   
-  
-  
-  
-  
+  /**
+   * Transform an empty data frame should result in no rows being returned
+   * The resulting schema should be transformed to have a Date date type
+   */
+  test("transform on empty data frame ") {
+    
+    val result = instance.transform(createTestDataFrame(0))
+    assert(result.count() == 0)
+
+  }
+
+  // 
+  // Helper methods
+  //
+  private def createTestDataFrame(nRows: Int): DataFrame = {
+
+    val fieldName = instance.columnName
+    val stringType = DataTypes.StringType
+    val schema = new StructType(
+      Array[StructField](
+        StructField(s"_${fieldName}", stringType, true),
+        StructField(fieldName, stringType, true)))
+
+    val col1Value = "Not important"
+    val col2Value = LocalDate.now().toString()
+    val rowData = Array[String](col1Value, col2Value)
+
+    val rows = new Array[Row](nRows)
+
+    for (i <- 0 to nRows) {
+      rows(i) = Row.fromSeq(rowData)
+    }
+    sqlc.createDataFrame(sc.parallelize(rows), StructType(schema))
+  }
+
 }
