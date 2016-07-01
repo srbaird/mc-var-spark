@@ -6,11 +6,14 @@ import org.apache.spark._
 import org.apache.log4j.Logger
 import main.scala.application.ApplicationContext
 import org.apache.spark.sql.types.DataTypes
+import org.apache.spark.sql.functions._
+import main.scala.transform.Transformable
+import org.apache.spark.ml.Transformer
 
 /**
  * Provide risk factor matrix as a DataFrame from from csv file
  */
-case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[DataFrame] {
+case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[DataFrame] with Transformable {
 
   val appContext = ApplicationContext.getContext
 
@@ -23,16 +26,18 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
   //
   private val sortColumn = "valueDate"
   //
+  private val transformers = Vector[Transformer]()
+  //
   private lazy val df = transform(readDataFrameFromFile)
 
   /**
-   * A positive non-zero number of rows must be supplied
+   * A positive non-zero number of rows must be supplied. The data is first sorted to ensure the most recent rows are returned
    */
   override def head(rows: Int): DataFrame = {
     if (rows < 1) {
       throw new IllegalArgumentException(s"The number of rows must be greater than zero: ${rows}")
     }
-    df.sort(sortColumn).limit(rows)
+    df.sort(desc(sortColumn)).limit(rows)
   }
 
   override def factors(): DataFrame = df
@@ -64,7 +69,7 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
   }
 
   // TEMP. TODO: create Transform objects to handle df manipulation
-  private def transform(df: DataFrame): DataFrame = {
+  private def _transform(df: DataFrame): DataFrame = {
 
     df.withColumn(s"${sortColumn}Conversion", df(sortColumn).cast(DataTypes.DateType))
       .drop(sortColumn)
@@ -86,5 +91,22 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
       .option("header", "true") // Use first line of all files as header
       .option("inferSchema", "true") // Automatically infer data types
       .load(fileURI)
+  }
+  
+  override def add(t:Transformer):Unit = {
+    
+    // don't allow a null value to be added
+    if (t == null) {
+      throw new IllegalArgumentException(s"Cannot add a null value")
+    }
+    transformers  :+ t
+  }
+  
+  override def transform(d:DataFrame): DataFrame = {
+
+    if (transformers.isEmpty) {
+      d
+    }
+    transformers.foldLeft(d)((acc, t) => t.transform(acc))
   }
 }
