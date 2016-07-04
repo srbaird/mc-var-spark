@@ -1,25 +1,27 @@
 package test.scala.factors
 
+import java.io.File
+import java.io.PrintWriter
+import java.time.LocalDate
+
 import org.apache.spark.LocalSparkContext
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.annotation.Experimental
+import org.scalatest.Finders
 import org.scalatest.FunSuite
 import org.scalatest.Suite
-import org.scalatest.Suite
-import main.scala.factors.RiskFactorSource
-import main.scala.factors.RiskFactorSourceFromFile
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkConf
-import java.io.PrintWriter
-import java.io.File
+
 import main.scala.application.ApplicationContext
-import java.time.LocalDate
+import main.scala.factors.RiskFactorSourceFromFile
+import main.scala.transform.ValueDateTransformer
 
 /**
  * Test the file-backed RiskFactorSource -> DataFrame. The tests are predicated on a file containing a months worth of data
  */
 class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { self: Suite =>
 
-  var instance: RiskFactorSource[DataFrame] = _
+  var instance: RiskFactorSourceFromFile = _
 
   // Test file details. Some of the test conditions are linked to the contents
   val hdfsLocation = "\"hdfs://localhost:54310\""
@@ -47,7 +49,8 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
 
   override def beforeEach() {
 
-    instance = RiskFactorSourceFromFile(sc)
+   instance = RiskFactorSourceFromFile(sc)
+   instance.add(new ValueDateTransformer())
   }
 
   override def afterAll = resetSparkContext()

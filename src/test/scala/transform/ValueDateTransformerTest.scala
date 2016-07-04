@@ -1,18 +1,20 @@
 package test.scala.transform
 
-import test.scala.application.SparkTestBase
+import java.sql.Date
+import java.time.LocalDate
+
+import org.apache.spark.SparkContext
 import org.apache.spark.ml.Transformer
-import main.scala.transform.ValueDateTransformer
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.DataType
-import java.time.LocalDate
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.StructType
+
+import main.scala.transform.ValueDateTransformer
+import test.scala.application.SparkTestBase
 
 class ValueDateTransformerTest extends SparkTestBase {
 
@@ -22,6 +24,7 @@ class ValueDateTransformerTest extends SparkTestBase {
   override def beforeAll(): Unit = {
 
     super.beforeAll()
+
     // Create the SQL context for data frame generation
     sqlc = new SQLContext(sc)
 
@@ -30,6 +33,10 @@ class ValueDateTransformerTest extends SparkTestBase {
 
     instance = new ValueDateTransformer()
   }
+  /**
+   * Overridden to prevent Spark Context from being recycled
+   */
+  override def afterEach = {}
 
   /**
    * Test the schema transformation with a single field using the default field name. The
@@ -129,21 +136,55 @@ class ValueDateTransformerTest extends SparkTestBase {
     assert(result.fieldIndex(fieldName) >= 0)
     assert(result(result.fieldIndex(fieldName)).dataType == expectedDataType)
   }
-  
+
   /**
    * Transform an empty data frame should result in no rows being returned
    * The resulting schema should be transformed to have a Date date type
    */
   test("transform on empty data frame ") {
-    
-    val result = instance.transform(createTestDataFrame(0))
-    assert(result.count() == 0)
 
+    val numRows = 0
+    runTestOnDataFrame(instance.transform(createTestDataFrame(numRows)), numRows)
+  }
+
+  /**
+   * Transform a one row data frame should result in the value date column being converted
+   * The resulting schema should be transformed to have a Date data type
+   */
+  test("transform on single row data frame ") {
+
+    val numRows = 1
+    runTestOnDataFrame(instance.transform(createTestDataFrame(numRows)), numRows)
+  }
+
+  /**
+   * Transform a multi row data frame should result in the value date column being converted
+   * The resulting schema should be transformed to have a Date data type
+   */
+  test("transform on multiple row data frame ") {
+
+    val numRows = 2
+    runTestOnDataFrame(instance.transform(createTestDataFrame(numRows)), numRows)
   }
 
   // 
   // Helper methods
   //
+  private def runTestOnDataFrame(d: DataFrame, n: Int) {
+    
+    // Assumes standard test df from createTestDataFrame(...) below
+    assert(d.count() == n)
+
+    val rows = d.take(n)
+
+    for (row <- rows) {
+      assert(row(0).isInstanceOf[String])
+      assert(row(1).isInstanceOf[Date])
+    }
+    assert(d.schema(0).dataType == DataTypes.StringType)
+    assert(d.schema(1).dataType == DataTypes.DateType)
+  }
+
   private def createTestDataFrame(nRows: Int): DataFrame = {
 
     val fieldName = instance.columnName
@@ -159,9 +200,11 @@ class ValueDateTransformerTest extends SparkTestBase {
 
     val rows = new Array[Row](nRows)
 
-    for (i <- 0 to nRows) {
+    for (i <- 0 until nRows) {
       rows(i) = Row.fromSeq(rowData)
     }
+
+    println(s"Spark context: ${sc}, SQL context: ${sqlc}")
     sqlc.createDataFrame(sc.parallelize(rows), StructType(schema))
   }
 

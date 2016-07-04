@@ -1,14 +1,20 @@
 package main.scala.factors
 
-import org.apache.spark.sql._
 import java.time.LocalDate
-import org.apache.spark._
+
+import scala.Vector
+
 import org.apache.log4j.Logger
-import main.scala.application.ApplicationContext
-import org.apache.spark.sql.types.DataTypes
-import org.apache.spark.sql.functions._
-import main.scala.transform.Transformable
+import org.apache.spark.SparkContext
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.annotation.Experimental
 import org.apache.spark.ml.Transformer
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions.desc
+
+import main.scala.application.ApplicationContext
+import main.scala.transform.Transformable
 
 /**
  * Provide risk factor matrix as a DataFrame from from csv file
@@ -26,7 +32,7 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
   //
   private val sortColumn = "valueDate"
   //
-  private val transformers = Vector[Transformer]()
+  private var transformers = Vector[Transformer]()
   //
   private lazy val df = transform(readDataFrameFromFile)
 
@@ -68,14 +74,6 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
     }
   }
 
-  // TEMP. TODO: create Transform objects to handle df manipulation
-  private def _transform(df: DataFrame): DataFrame = {
-
-    df.withColumn(s"${sortColumn}Conversion", df(sortColumn).cast(DataTypes.DateType))
-      .drop(sortColumn)
-      .withColumnRenamed(s"${sortColumn}Conversion", sortColumn)
-  }
-
   def readDataFrameFromFile: DataFrame = {
 
     // Use the DataBricks implementation
@@ -91,22 +89,24 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
       .option("header", "true") // Use first line of all files as header
       .option("inferSchema", "true") // Automatically infer data types
       .load(fileURI)
+
   }
-  
-  override def add(t:Transformer):Unit = {
-    
+
+  override def add(t: Transformer): Unit = {
+
     // don't allow a null value to be added
     if (t == null) {
       throw new IllegalArgumentException(s"Cannot add a null value")
     }
-    transformers  :+ t
+    transformers = transformers :+ t
   }
-  
-  override def transform(d:DataFrame): DataFrame = {
+
+  override def transform(d: DataFrame): DataFrame = {
 
     if (transformers.isEmpty) {
       d
+    } else {
+      transformers.foldLeft(d)((acc, t) => t.transform(acc))
     }
-    transformers.foldLeft(d)((acc, t) => t.transform(acc))
   }
 }

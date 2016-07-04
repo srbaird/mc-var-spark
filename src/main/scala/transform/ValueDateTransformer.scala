@@ -39,6 +39,7 @@ class ValueDateTransformer(override val uid: String) extends Transformer {
    */
   override def transform(df: DataFrame): DataFrame = {
 
+
     df.withColumn(s"${columnName}${tempColSuffix}", df(columnName).cast(DataTypes.DateType))
       .drop(columnName)
       .withColumnRenamed(s"${columnName}${tempColSuffix}", columnName)
