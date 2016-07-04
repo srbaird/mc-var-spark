@@ -59,6 +59,7 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
 
     if (to != null) {
 
+
       if (from.compareTo(to) > 0) {
         throw new IllegalArgumentException(s"The from date exceeded the to date: ${from}")
       } else {

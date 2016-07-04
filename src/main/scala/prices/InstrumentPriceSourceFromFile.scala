@@ -29,7 +29,8 @@ class InstrumentPriceSourceFromFile(sc: SparkContext) extends InstrumentPriceSou
   //
   private val logger = Logger.getLogger(RiskFactorSourceFromFile.getClass)
   //
-  private val sortColumn = "valueDate"
+  private val keyColumn = appContext.getString("instrumentPrice.keyColumn")
+  private val valueColumn = appContext.getString("instrumentPrice.valueColumn")
   //
   private var transformers = Vector[Transformer]()
   //
@@ -56,7 +57,7 @@ class InstrumentPriceSourceFromFile(sc: SparkContext) extends InstrumentPriceSou
       .option("inferSchema", "true") // Automatically infer data types
       .load(fileURI)
 
-    transform(df) // Apply the supplied transformations
+    transform(df.select(keyColumn, valueColumn)) // Apply the supplied transformations
   }
 
   /**
@@ -71,7 +72,23 @@ class InstrumentPriceSourceFromFile(sc: SparkContext) extends InstrumentPriceSou
     if (from == null) {
       throw new IllegalArgumentException(s"An invalid start date was supplied: ${from}")
     }
-    null
+
+    if (to != null) {
+
+      if (from.compareTo(to) > 0) {
+        throw new IllegalArgumentException(s"The from date ${from} exceeded the to date: ${to}")
+      } else {
+        val df = getPrices(dsCode)
+        val fromDate = java.sql.Date.valueOf(from)
+        val toDate = java.sql.Date.valueOf(to)
+        df.filter(df(keyColumn).geq(fromDate)).filter(df(keyColumn).leq(toDate))
+      }
+
+    } else {
+      val fromDate = java.sql.Date.valueOf(from)
+      val df = getPrices(dsCode)
+      df.filter(df(keyColumn).geq(fromDate))
+    }
   }
 
   /**

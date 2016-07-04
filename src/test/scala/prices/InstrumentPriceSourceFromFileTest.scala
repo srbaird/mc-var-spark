@@ -6,6 +6,7 @@ import main.scala.prices.InstrumentPriceSourceFromFile
 import test.scala.application.SparkTestBase
 import org.apache.hadoop.conf.Configuration
 import java.time.LocalDate
+import main.scala.transform.ValueDateTransformer
 
 class InstrumentPriceSourceFromFileTest extends SparkTestBase {
 
@@ -15,6 +16,8 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
   val hdfsLocation = "\"hdfs://localhost:54310\""
   val fileLocation = "\"/project/test/initial-testing/prices/\""
   val priceFileType = "\".csv\""
+  val keyColumn = "\"valueDate\""
+  val valueColumn = "\"closePrice\""
 
   override def beforeAll(): Unit = {
 
@@ -26,7 +29,9 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
 
     // Create a temporary config file to specify the test data to use
     // This is generated before each test case as expected outcomes depend on different configurations
-    val configFileContents = s"instrumentPrice{hdfsLocation = ${hdfsLocation}, fileLocation = ${fileLocation}, priceFileType = ${priceFileType} }"
+    val configFileContents = s"""instrumentPrice{hdfsLocation = ${hdfsLocation}, fileLocation = ${fileLocation}
+                      , priceFileType = ${priceFileType} , keyColumn = ${keyColumn}, valueColumn = ${valueColumn}}"""
+
     val configFile = writeTempFile(s"${hadoopAppContextEntry}, ${configFileContents}") // Prepend the Hadoop dependencies
     try {
       val result = ApplicationContext.useConfigFile(configFile)
@@ -34,7 +39,7 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
       configFile.delete()
     }
     instance = new InstrumentPriceSourceFromFile(sc) // Needs the Application context to be available
-
+    instance.add(new ValueDateTransformer())
   }
   /**
    * Overridden to prevent Spark Context from being recycled
@@ -47,8 +52,11 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
   test("list the available price data sets from an empty directory") {
 
     val emptyDirectory = "intentionally-empty-for-testing--do-NOT-populate"
+
     // Generate a new Application context using a modified  file to point the source to an empty directory
-    val configFileContents = s"instrumentPrice{hdfsLocation = ${hdfsLocation}, fileLocation = ${fileLocation}/${emptyDirectory}/, priceFileType = ${priceFileType} }"
+    val configFileContents = s"""instrumentPrice{hdfsLocation = ${hdfsLocation}, fileLocation = ${fileLocation}/${emptyDirectory}/
+      , priceFileType = ${priceFileType} , keyColumn = ${keyColumn}, valueColumn = ${valueColumn}}"""
+
     val configFile = writeTempFile(s"${hadoopAppContextEntry}, ${configFileContents}")
     try {
       val result = ApplicationContext.useConfigFile(configFile)
@@ -112,8 +120,8 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
       instance.getPrices("", LocalDate.of(2106, 5, 1))
     }
   }
-  
-    /**
+
+  /**
    * Passing a null dataset code argument should result in an exception
    */
   test("test reading by date with a null dataset code argument") {
@@ -135,16 +143,41 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
   }
 
   /**
+   * Passing a from-date greater than the to-date argument should result in an exception
+   */
+  test("test reading by date where from-date exceeds to-date") {
+
+    val expectedDSCode = "TEST_DSNAME"
+    intercept[IllegalArgumentException] {
+      instance.getPrices(expectedDSCode, LocalDate.of(2016, 5, 2), LocalDate.of(2016, 5, 1))
+    }
+  }
+
+  /**
    * Get a subset of the test dataset based on a date range
    */
   test("Get a test subset between 01 and 05-May-2016") {
 
     val expectedDSCode = "TEST_DSNAME"
-    val fromDate = LocalDate.of(2106, 5, 1)
+    val fromDate = LocalDate.of(2016, 5, 1)
     val toDate = LocalDate.of(2016, 5, 5)
 
     val expectedRowCount = 4L
-    //val result = instance.getPrices(expectedDSCode,fromDate, toDate)
-    // assert(result.count() == expectedRowCount)
+    val result = instance.getPrices(expectedDSCode, fromDate, toDate)
+    assert(result.count() == expectedRowCount)
+  }
+  
+    /**
+   * Get a subset of the test dataset based on a from-date
+   */
+  test("Get a test subset after 15-May-2016") {
+
+    val expectedDSCode = "TEST_DSNAME"
+    val fromDate = LocalDate.of(2016, 5, 15)
+
+    val expectedRowCount = 11L
+    val result = instance.getPrices(expectedDSCode, fromDate)
+
+    assert(result.count() == expectedRowCount)
   }
 }
