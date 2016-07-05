@@ -9,14 +9,15 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
   var instance: InstrumentModelSourceFromFile = _
 
   // Test file location. Some of the test conditions are linked to the contents
-  val modelLocation = "\"/project/test/initial-testing/models/\""
+  val modelsLocation = "\"/project/test/initial-testing/model/models/\""
+  val modelSchemasLocation = "\"/project/test/initial-testing/model/schemas/\""
 
   override def beforeAll(): Unit = {
 
     super.beforeAll()
 
     // Create a temporary config file to specify the test data to use
-    val configFileContents = s"instrumentModel{ modelLocation = ${modelLocation} }"
+    val configFileContents = s"instrumentModel{ modelsLocation = ${modelsLocation} , modelSchemasLocation = ${modelSchemasLocation}}"
     val configFile = writeTempFile(s"${hadoopAppContextEntry}, ${configFileContents}") // Prepend the Hadoop dependencies
 
     try {
@@ -69,13 +70,25 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
   /**
    * Get a model for an non-existent dataset code
    */
-  test("read a model from a dataset code that does not exist") {
+  test("read a model for a dataset code that does not exist") {
 
     val missingDSCode = "TEST_DSCODE"
     assert(!instance.getAvailableModels.contains(missingDSCode))
 
-    //   val result = instance.getModel(missingDSCode)
-    //   assert(!result.isEmpty)
+    val result = instance.getModel(missingDSCode)
+    assert(result == None)
+  }
+
+  /**
+   * Get a model for a known dataset code
+   */
+  test("read a model for a known dataset code ") {
+
+    val missingDSCode = "WIKI_CMC"
+    assert(instance.getAvailableModels.contains(missingDSCode))
+
+    val result = instance.getModel(missingDSCode)
+    assert(result != None)
   }
 
 }
