@@ -1,8 +1,5 @@
 package test.scala.models
 
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-
 import main.scala.application.ApplicationContext
 import main.scala.models.InstrumentModelSourceFromFile
 import test.scala.application.SparkTestBase
@@ -46,6 +43,18 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
   test("list the available instrument model data set codes") {
 
     val result = instance.getAvailableModels
+    assert(!result.isEmpty)
+  }
+
+  /**
+   * Get a model for an non-existent dataset code
+   */
+  test("read a model fro a dataset code that does not exist") {
+
+    val missingDSCode = "TEST_DSCODE"
+    assert(!instance.getAvailableModels.contains(missingDSCode))
+    
+    val result = instance.getModel(missingDSCode)
     assert(!result.isEmpty)
   }
 

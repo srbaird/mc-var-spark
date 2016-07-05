@@ -5,13 +5,13 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-
 import main.scala.application.ApplicationContext
+import org.apache.spark.ml.util.MLWritable
 
 /**
  * Persistence layer using HDFS file system
  */
-class InstrumentModelSourceFromFile(sc: SparkContext) extends InstrumentModelSource {
+class InstrumentModelSourceFromFile(sc: SparkContext) extends InstrumentModelSource[MLWritable] {
 
   val appContext = ApplicationContext.getContext
 
@@ -21,7 +21,7 @@ class InstrumentModelSourceFromFile(sc: SparkContext) extends InstrumentModelSou
   //
   private val logger = Logger.getLogger(this.getClass)
 
-  def getAvailableModels: Seq[String] = {
+  override def getAvailableModels: Seq[String] = {
     // Use the Hadoop configuration from the Application Context rather than the Spark default
     val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
 
@@ -37,4 +37,6 @@ class InstrumentModelSourceFromFile(sc: SparkContext) extends InstrumentModelSou
     }
     found
   }
+  
+  override def getModel(dsCode:String):Option[MLWritable] = {throw new UnsupportedOperationException("Not implemented")}
 }
