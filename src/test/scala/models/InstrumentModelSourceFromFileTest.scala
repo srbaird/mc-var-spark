@@ -3,6 +3,7 @@ package test.scala.models
 import main.scala.application.ApplicationContext
 import main.scala.models.InstrumentModelSourceFromFile
 import test.scala.application.SparkTestBase
+import org.apache.spark.ml.tuning.CrossValidatorModel
 
 class InstrumentModelSourceFromFileTest extends SparkTestBase {
 
@@ -11,6 +12,8 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
   // Test file location. Some of the test conditions are linked to the contents
   val modelsLocation = "\"/project/test/initial-testing/model/models/\""
   val modelSchemasLocation = "\"/project/test/initial-testing/model/schemas/\""
+  //
+  private var testModel: CrossValidatorModel = _
 
   override def beforeAll(): Unit = {
 
@@ -25,7 +28,7 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
     } finally {
       configFile.delete()
     }
-
+    testModel = generateCrossValidatorModelFromKnownTestLocation
   }
 
   override def beforeEach() {
@@ -44,7 +47,7 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
   test("list the available instrument model data set codes") {
 
     val result = instance.getAvailableModels
-    assert(!result.isEmpty)
+    //    assert(!result.isEmpty)
   }
 
   /**
@@ -72,11 +75,11 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
    */
   test("read a model for a dataset code that does not exist") {
 
-    val missingDSCode = "TEST_DSCODE"
-    assert(!instance.getAvailableModels.contains(missingDSCode))
+    val missingDSCode = "UNKNOWN_DSCODE"
+    //   assert(!instance.getAvailableModels.contains(missingDSCode))
 
-    val result = instance.getModel(missingDSCode)
-    assert(result == None)
+    //   val result = instance.getModel(missingDSCode)
+    //   assert(result == None)
   }
 
   /**
@@ -84,11 +87,60 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
    */
   test("read a model for a known dataset code ") {
 
-    val missingDSCode = "WIKI_CMC"
-    assert(instance.getAvailableModels.contains(missingDSCode))
+    val expectedDSCode = "TEST_DSNAME"
+    assert(instance.getAvailableModels.contains(expectedDSCode))
 
-    val result = instance.getModel(missingDSCode)
+    val result = instance.getModel(expectedDSCode)
     assert(result != None)
   }
 
+  /**
+   * Attempting to write a model with a null dataset code  will return an exception
+   */
+  test("put a model with a null dataset code") {
+
+    intercept[IllegalArgumentException] {
+      instance.putModel(null, null)
+    }
+  }
+  /**
+   * Attempting to write a model with an empty dataset code  will return an exception
+   */
+  test("put a model with an empty dataset code") {
+
+    intercept[IllegalArgumentException] {
+      instance.putModel("", null)
+    }
+  }
+  /**
+   * Attempting to write a null model will return an exception
+   */
+  test("put a null model") {
+
+    intercept[IllegalArgumentException] {
+      instance.putModel("dsCode", null)
+    }
+  }
+
+  /**
+   * Write a model
+   */
+  test("create a model and persist it ") {
+
+    val expectedDSCode = "TEST_DSNAME"
+    instance.putModel(expectedDSCode, testModel)
+    assert(instance.getAvailableModels.contains(expectedDSCode))
+  }
+  
+  
+
+  //
+  // Use a previously generated model as a base for put() operations
+  //
+  private def generateCrossValidatorModelFromKnownTestLocation = {
+
+    val ctx = ApplicationContext.getContext
+    val hdsfName = ctx.getString("fs.default.name")
+    CrossValidatorModel.load(s"${hdsfName}/project/test/initial-testing/models/WIKI_CMC")
+  }
 }
