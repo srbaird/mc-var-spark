@@ -1,12 +1,15 @@
 package main.scala.models
 
+import java.io.FileNotFoundException
+
 import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-import main.scala.application.ApplicationContext
 import org.apache.spark.ml.util.MLWritable
+
+import main.scala.application.ApplicationContext
 
 /**
  * Persistence layer using HDFS file system
@@ -37,6 +40,34 @@ class InstrumentModelSourceFromFile(sc: SparkContext) extends InstrumentModelSou
     }
     found
   }
-  
-  override def getModel(dsCode:String):Option[MLWritable] = {throw new UnsupportedOperationException("Not implemented")}
+
+  override def getModel(dsCode: String): Option[MLWritable] = {
+
+    if (dsCode == null || dsCode.isEmpty) {
+      throw new IllegalArgumentException(s"An invalid dataset code date was supplied: ${dsCode}")
+    }
+
+    // Use the Hadoop configuration from the Application Context rather than the Spark default
+    val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
+
+    val p = new Path(s"${modelLocation}${dsCode}")
+    
+    try {
+      val m = fs.getFileStatus(p)
+      // Basic check to ensure that it's a directory
+      if (m.isDirectory()) {
+        Option(m)
+      } else {
+        None
+      }      
+    } 
+    catch 
+    {
+      case notFound: FileNotFoundException => None
+      case otherException: Throwable => throw otherException
+    } 
+
+    
+    throw new UnsupportedOperationException("Not implemented")
+  }
 }
