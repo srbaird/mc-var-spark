@@ -131,8 +131,39 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
     instance.putModel(expectedDSCode, testModel)
     assert(instance.getAvailableModels.contains(expectedDSCode))
   }
-  
-  
+
+  /**
+   * Attempting to remove a model with a null dataset code  will return an exception
+   */
+  test("remove a model with a null dataset code") {
+
+    intercept[IllegalArgumentException] {
+      instance.removeModel(null)
+    }
+  }
+
+  /**
+   * Attempting to remove a model with an empty dataset code  will return an exception
+   */
+  test("remove a model with an empty dataset code") {
+
+    intercept[IllegalArgumentException] {
+      instance.removeModel("")
+    }
+  }
+
+  /**
+   * Remove a previously created model
+   */
+  test("remove an existing model") {
+
+    val expectedDSCode = "TEST_DSNAME_FOR_DELETION"
+    instance.putModel(expectedDSCode, testModel)
+    assert(instance.getAvailableModels.contains(expectedDSCode))
+
+    instance.removeModel(expectedDSCode)
+    assert(!instance.getAvailableModels.contains(expectedDSCode))
+  }
 
   //
   // Use a previously generated model as a base for put() operations

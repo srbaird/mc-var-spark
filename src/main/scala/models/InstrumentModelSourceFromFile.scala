@@ -103,10 +103,29 @@ class InstrumentModelSourceFromFile(sc: SparkContext) extends InstrumentModelSou
     // Trap any missed exceptions
     assert(isLoadable(dsCode, fs))
   }
-  
-  override def removeModel(dsCode:String):Unit = {
+
+  override def removeModel(dsCode: String): Unit = {
+
+    validateDSCode(dsCode)
+
+    // Use the Hadoop configuration from the Application Context rather than the Spark default
+    val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
+
+    try {
+      deleteMetadata(dsCode, fs)
+    } catch {
+      case otherException: Throwable => // Defer exceptions
+    }
+
+    try {
+      val modelPath = s"${modelsLocation}${dsCode}"
+      fs.delete(new Path(modelPath), true)      // Recursive delete as it is a directory
+    } catch {
+      case otherException: Throwable => // Defer exceptions
+    }
     
-    throw new UnsupportedOperationException("Not implemented")
+    // Ensure the model has been removed
+    assert(!isLoadable(dsCode, fs))
   }
 
   //
