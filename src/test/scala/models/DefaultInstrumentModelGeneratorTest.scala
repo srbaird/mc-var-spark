@@ -34,6 +34,8 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
     generateContextFileContentValues
 
+    generateContextFileContents
+
     generateAppContext
 
     generateDefaultInstance
@@ -139,6 +141,21 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
     intercept[IllegalStateException] {
       instance.buildModel("AnyString")
     }
+  }
+
+  /**
+   * Generating a model with an empty factors file
+   */
+  test("test generating model without risk factors data") {
+
+    factorsFileName = "\"factors.clean.empty.csv\""
+    generateContextFileContents
+
+    generateAppContext
+
+    generateDefaultInstance
+
+    instance.buildModel("AnyString")
   }
 
   //

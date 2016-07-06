@@ -46,7 +46,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     (factors != null && prices != null && models != null)
   }
 
-  override def buildModel(dsCodes:Seq[String]): Unit = {
+  override def buildModel(dsCodes:Seq[String]): Map[String,(Boolean,String)] = {
     
     val emptyString = ""
     if (dsCodes == null || dsCodes.isEmpty || dsCodes.contains(emptyString) || dsCodes.contains(null)) {
@@ -65,6 +65,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     //    join price dataframe to risk factors
     //    train default model
     //    persist model and add 
+    null
   }
 
   //
