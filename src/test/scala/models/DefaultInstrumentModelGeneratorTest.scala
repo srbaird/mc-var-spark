@@ -29,7 +29,7 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
     super.beforeAll()
 
   }
-  // Prevent the Spark Context being recycled
+
   override def beforeEach() {
 
     generateContextFileContentValues
@@ -40,6 +40,9 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
     generateDefaultInstance
   }
+  
+    // Prevent the Spark Context being recycled
+  override def afterEach() {}
 
   /**
    * Passing a null risk factor source argument should result in an exception
@@ -150,14 +153,37 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
     factorsFileName = "\"factors.clean.empty.csv\""
     generateContextFileContents
-
     generateAppContext
-
     generateDefaultInstance
 
-    instance.buildModel("AnyString")
+    val expectedDSCode = "AnyString"
+    val result = instance.buildModel(expectedDSCode)
+    assert(!result(expectedDSCode)._1)    
   }
 
+  /**
+   * Generating a model with no dataset code prices
+   */
+  test("test generating model without dataset price data") {
+
+    val expectedDSCode = "AnyString"
+    val result = instance.buildModel(expectedDSCode)
+    assert(!result(expectedDSCode)._1)
+
+  }
+  
+  
+  /**
+   * Generating a model with no existing code prices
+   */
+  test("test generating model with existing dataset price data") {
+
+    val availableCodes = new InstrumentPriceSourceFromFile(sc).getAvailableCodes()
+    val expectedDSCode = availableCodes(0)
+    val result = instance.buildModel(expectedDSCode)
+    assert(result(expectedDSCode)._1)
+  }
+  
   //
   //
   //
