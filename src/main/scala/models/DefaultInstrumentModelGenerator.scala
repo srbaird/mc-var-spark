@@ -12,7 +12,7 @@ import main.scala.prices.InstrumentPriceSource
 /**
  * For want of a better name, the default model generator for data sets
  */
-class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelGenerator with InstrumentModelGeneratorSources[DataFrame,Model[_]] {
+class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelGenerator with InstrumentModelGeneratorSources[DataFrame, Model[_]] {
 
   // Source of Market Risk Factor data (features)
   private var factors: RiskFactorSource[DataFrame] = _
@@ -40,14 +40,18 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     validateSource(source)
     models = source
   }
-  
-  override def hasSources: Boolean = {
-    
-  //  println(s"${factors}, ${prices}, ${models}")
-    (factors != null && prices != null && models != null)
- }
 
-  override def buildModel(dsCode: String, dsCodes: String*): Unit = { throw new UnsupportedOperationException("Not implemented") }
+  override def hasSources: Boolean = {
+
+    (factors != null && prices != null && models != null)
+  }
+
+  override def buildModel(dsCode: String, dsCodes: String*): Unit = {
+    
+    if (dsCode == null || dsCode.isEmpty) {
+      throw new IllegalArgumentException(s"Invalid dsCode supplied ${}")
+    }
+  }
 
   //
   private def validateSource(source: Any) = if (source == null) throw new IllegalArgumentException(s"Invalid supplied source ${}")

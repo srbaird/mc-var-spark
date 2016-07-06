@@ -124,4 +124,24 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
     instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
     assert(!instance.hasSources)
   }
+
+  /**
+   * Generating a model with a null dataset code should result in an exception
+   */
+  test("test generating model with null dataset code") {
+
+    intercept[IllegalArgumentException] {
+      instance.buildModel(null)
+    }
+  }
+
+  /**
+   * Generating a model with an empty dataset code should result in an exception
+   */
+  test("test generating model with an empty dataset code") {
+
+    intercept[IllegalArgumentException] {
+      instance.buildModel("")
+    }
+  }
 }
