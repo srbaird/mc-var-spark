@@ -52,7 +52,19 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     if (dsCodes == null || dsCodes.isEmpty || dsCodes.contains(emptyString) || dsCodes.contains(null)) {
       throw new IllegalArgumentException(s"Invalid dsCode supplied ${}")
     }
+    // assert that the dependencies have been set
+    if (!hasSources) {
+      throw new IllegalStateException(s"All dependencies have not been set")
+    }
     
+    // Load the risk factor data.  If not data reject all dsCodes
+    
+    // Reject dsCodes where no price data exists
+    
+    // for each remaining dsCode
+    //    join price dataframe to risk factors
+    //    train default model
+    //    persist model and add 
   }
 
   //

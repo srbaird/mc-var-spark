@@ -6,52 +6,37 @@ import main.scala.models.InstrumentModelSourceFromFile
 import test.scala.application.SparkTestBase
 import main.scala.prices.InstrumentPriceSourceFromFile
 import main.scala.factors.RiskFactorSourceFromFile
+import main.scala.transform.ValueDateTransformer
 
 class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
   var instance: DefaultInstrumentModelGenerator = _
   //
-  val hdfsLocation = "\"hdfs://localhost:54310\""
-  val fileLocation = "\"/project/test/initial-testing/prices/\""
-  val priceFileType = "\".csv\""
-  val keyColumn = "\"valueDate\""
-  val valueColumn = "\"closePrice\""
+  var hdfsLocation: String = _
+  var fileLocation: String = _
+  var priceFileType: String = _
+  var keyColumn: String = _
+  var valueColumn: String = _
 
-  val instrumentPriceSourceConfig = s"""instrumentPrice{hdfsLocation = ${hdfsLocation}, fileLocation = ${fileLocation}
-                      , priceFileType = ${priceFileType} , keyColumn = ${keyColumn}, valueColumn = ${valueColumn}}"""
+  var modelsLocation: String = _
+  var modelSchemasLocation: String = _
 
-  val modelsLocation = "\"/project/test/initial-testing/model/models/\""
-  val modelSchemasLocation = "\"/project/test/initial-testing/model/schemas/\""
-
-  val instrumentModelSourceConfig = s"instrumentModel{ modelsLocation = ${modelsLocation} , modelSchemasLocation = ${modelSchemasLocation}}"
-
-  val factorsFileLocation = "\"/project/test/initial-testing/\""
-  val factorsFileName = "\"factors.clean.may2016.csv\""
-
-  val factorsSourceContents = s"riskFactor{hdfsLocation = ${hdfsLocation}, fileLocation = ${factorsFileLocation}, factorsFileName = ${factorsFileName} }"
+  var factorsFileLocation: String = _
+  var factorsFileName: String = _
 
   override def beforeAll(): Unit = {
 
     super.beforeAll()
 
-    // Create a temporary config file to specify the test data to use
-    val configFileContents = s"${instrumentPriceSourceConfig}, ${instrumentModelSourceConfig}, ${factorsSourceContents}"
-    val configFile = writeTempFile(s"${hadoopAppContextEntry}, ${configFileContents}") // Prepend the Hadoop dependencies
-    try {
-      val result = ApplicationContext.useConfigFile(configFile)
-    } finally {
-      configFile.delete()
-    }
-
   }
   // Prevent the Spark Context being recycled
   override def beforeEach() {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
-    // TODO: move the dependencies to DI implementation
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
-    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
-    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
+    generateContextFileContentValues
+
+    generateAppContext
+
+    generateDefaultInstance
   }
 
   /**
@@ -144,4 +129,72 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
       instance.buildModel("")
     }
   }
+
+  /**
+   * Generating a model without required dependencies should result in an exception
+   */
+  test("test generating model without setting dependencies") {
+
+    instance = new DefaultInstrumentModelGenerator(sc)
+    intercept[IllegalStateException] {
+      instance.buildModel("AnyString")
+    }
+  }
+
+  //
+  //
+  //
+  private def generateContextFileContentValues = {
+
+    hdfsLocation = "\"hdfs://localhost:54310\""
+    fileLocation = "\"/project/test/initial-testing/prices/\""
+    priceFileType = "\".csv\""
+    keyColumn = "\"valueDate\""
+    valueColumn = "\"closePrice\""
+
+    modelsLocation = "\"/project/test/initial-testing/model/models/\""
+    modelSchemasLocation = "\"/project/test/initial-testing/model/schemas/\""
+
+    factorsFileLocation = "\"/project/test/initial-testing/\""
+    factorsFileName = "\"factors.clean.may2016.csv\""
+  }
+
+  private def generateContextFileContents: String = {
+
+    val instrumentPriceSourceConfig = s"""instrumentPrice{hdfsLocation = ${hdfsLocation}, fileLocation = ${fileLocation}
+                      , priceFileType = ${priceFileType} , keyColumn = ${keyColumn}, valueColumn = ${valueColumn}}"""
+    val instrumentModelSourceConfig = s"instrumentModel{ modelsLocation = ${modelsLocation} , modelSchemasLocation = ${modelSchemasLocation}}"
+
+    val factorsSourceContents = s"riskFactor{hdfsLocation = ${hdfsLocation}, fileLocation = ${factorsFileLocation}, factorsFileName = ${factorsFileName} }"
+    val configFileContents = s"${instrumentPriceSourceConfig}, ${instrumentModelSourceConfig}, ${factorsSourceContents}"
+    s"${hadoopAppContextEntry}, ${configFileContents}" // Prepend the Hadoop dependencies
+
+  }
+
+  private def generateDefaultInstance = {
+
+    instance = new DefaultInstrumentModelGenerator(sc)
+    // TODO: move the dependencies to DI implementation
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+
+    val instrumentPriceSource = new InstrumentPriceSourceFromFile(sc)
+    instrumentPriceSource.add(new ValueDateTransformer)
+    instance.instrumentPriceSource(instrumentPriceSource)
+
+    val riskFactorSource = new RiskFactorSourceFromFile(sc)
+    riskFactorSource.add(new ValueDateTransformer)
+    instance.riskFactorSource(riskFactorSource)
+
+  }
+
+  private def generateAppContext {
+
+    val configFile = writeTempFile(generateContextFileContents)
+    try {
+      val result = ApplicationContext.useConfigFile(configFile)
+    } finally {
+      configFile.delete()
+    }
+  }
+
 }
