@@ -83,12 +83,45 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
       instance.instrumentModelSource(null)
     }
   }
-  
-    /**
+
+  /**
    * Default setup should mean that hasSources is true
    */
   test("test the default setup returns true for hasSources") {
 
     assert(instance.hasSources)
+  }
+
+  /**
+   * Setup without an instrument model source argument should mean that hasSources is false
+   */
+  test("test setup without an instrument model source argument") {
+
+    instance = new DefaultInstrumentModelGenerator(sc)
+    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
+    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
+    assert(!instance.hasSources)
+  }
+
+  /**
+   * Setup without an instrument model price argument should mean that hasSources is false
+   */
+  test("test setup without an instrument price source argument") {
+
+    instance = new DefaultInstrumentModelGenerator(sc)
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
+    assert(!instance.hasSources)
+  }
+
+  /**
+   * Setup without an risk factor source argument should mean that hasSources is false
+   */
+  test("test setup without a risk factor source argument") {
+
+    instance = new DefaultInstrumentModelGenerator(sc)
+    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+    assert(!instance.hasSources)
   }
 }
