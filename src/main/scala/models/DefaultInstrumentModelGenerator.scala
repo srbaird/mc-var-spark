@@ -46,11 +46,13 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     (factors != null && prices != null && models != null)
   }
 
-  override def buildModel(dsCode: String, dsCodes: String*): Unit = {
+  override def buildModel(dsCodes:Seq[String]): Unit = {
     
-    if (dsCode == null || dsCode.isEmpty) {
+    val emptyString = ""
+    if (dsCodes == null || dsCodes.isEmpty || dsCodes.contains(emptyString) || dsCodes.contains(null)) {
       throw new IllegalArgumentException(s"Invalid dsCode supplied ${}")
     }
+    
   }
 
   //
