@@ -26,18 +26,14 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
   val factorsFileName = "\"factors.clean.may2016.csv\""
 
   val factorsSourceContents = s"riskFactor{hdfsLocation = ${hdfsLocation}, fileLocation = ${factorsFileLocation}, factorsFileName = ${factorsFileName} }"
-  
 
-  
-  
   override def beforeAll(): Unit = {
 
     super.beforeAll()
 
     // Create a temporary config file to specify the test data to use
-    val configFileContents = s"${instrumentPriceSourceConfig}, ${instrumentModelSourceConfig}, ${factorsSourceContents},  }"
+    val configFileContents = s"${instrumentPriceSourceConfig}, ${instrumentModelSourceConfig}, ${factorsSourceContents}"
     val configFile = writeTempFile(s"${hadoopAppContextEntry}, ${configFileContents}") // Prepend the Hadoop dependencies
-
     try {
       val result = ApplicationContext.useConfigFile(configFile)
     } finally {
@@ -45,10 +41,40 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
     }
 
   }
-
+  // Prevent the Spark Context being recycled
   override def beforeEach() {
 
     instance = new DefaultInstrumentModelGenerator(sc)
+  }
+
+  /**
+   * Passing a null risk factor source argument should result in an exception
+   */
+  test("test setting a null risk factor source argument") {
+
+    intercept[IllegalArgumentException] {
+      instance.riskFactorSource(null)
+    }
+  }
+
+  /**
+   * Passing a null instrument price source argument should result in an exception
+   */
+  test("test setting a null instrument price source argument") {
+
+    intercept[IllegalArgumentException] {
+      instance.instrumentPriceSource(null)
+    }
+  }
+
+  /**
+   * Passing a null instrument model source argument should result in an exception
+   */
+  test("test setting a null instrument model source argument") {
+
+    intercept[IllegalArgumentException] {
+      instance.instrumentModelSource(null)
+    }
   }
 
 }
