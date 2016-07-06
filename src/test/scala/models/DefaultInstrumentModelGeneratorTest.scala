@@ -2,7 +2,10 @@ package test.scala.models
 
 import main.scala.application.ApplicationContext
 import main.scala.models.DefaultInstrumentModelGenerator
+import main.scala.models.InstrumentModelSourceFromFile
 import test.scala.application.SparkTestBase
+import main.scala.prices.InstrumentPriceSourceFromFile
+import main.scala.factors.RiskFactorSourceFromFile
 
 class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
@@ -45,6 +48,10 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
   override def beforeEach() {
 
     instance = new DefaultInstrumentModelGenerator(sc)
+    // TODO: move the dependencies to DI implementation
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
+    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
   }
 
   /**
@@ -76,5 +83,12 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
       instance.instrumentModelSource(null)
     }
   }
+  
+    /**
+   * Default setup should mean that hasSources is true
+   */
+  test("test the default setup returns true for hasSources") {
 
+    assert(instance.hasSources)
+  }
 }
