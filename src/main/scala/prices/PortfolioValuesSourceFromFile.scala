@@ -1,13 +1,20 @@
 package main.scala.prices
 
+import java.time.LocalDate
+
+import scala.Vector
+
+import org.apache.commons.io.FilenameUtils
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
+import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.DataFrame
+
 import main.scala.application.ApplicationContext
 import main.scala.portfolios.PortfolioValuesSource
 import main.scala.transform.Transformable
-import org.apache.spark.ml.Transformer
-import java.time.LocalDate
 
 class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSource[DataFrame] with Transformable {
 
@@ -27,7 +34,24 @@ class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSou
   //
   private var transformers = Vector[Transformer]()
 
-  override def getAvailableCodes(): Seq[String] = throw new UnsupportedOperationException("Not implemented")
+  override def getAvailableCodes(): Seq[String] = {
+
+    // Use the Hadoop configuration from the Application Context rather than the Spark default
+    val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
+
+    val p = new Path(fileLocation)
+    val files = fs.listFiles(p, false)
+    var found = Array[String]()
+
+    while (files.hasNext()) {
+      val f = files.next().getPath.getName
+      if (f.endsWith(portfolioFileType)) {
+        found = found :+ FilenameUtils.removeExtension(f)
+      }
+    }
+    found
+  }
+ 
   override def getHoldings(portfolioCode: String, at: LocalDate): DataFrame = throw new UnsupportedOperationException("Not implemented")
 
   /**

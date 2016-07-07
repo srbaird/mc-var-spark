@@ -69,7 +69,7 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
 
   }
   /**
-   * Get a list of the datasets contained in the non-populated test directory.
+   * Get a list of the datasets contained in the populated test directory.
    */
   test("list the available price data sets from a populated directory") {
 
