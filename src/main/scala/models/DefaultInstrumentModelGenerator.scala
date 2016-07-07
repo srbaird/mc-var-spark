@@ -130,7 +130,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
   }
 
   //
-  //
+  //  Returns a CrossValidator as an estimator
   //
   private def getModelEstimator(dsCode: String, trainDF: DataFrame): Estimator[_] = {
 
