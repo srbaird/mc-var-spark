@@ -123,6 +123,35 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
     assert(instrumentModelSource.getAvailableModels.contains(expectedDSCode))
   }
 
+  /**
+   * Generating a model with existing code prices
+   */
+  test("test generating model with existing dataset price data") {
+
+    val availableCodes = new InstrumentPriceSourceFromFile(sc).getAvailableCodes()
+
+    val expectedDSCode1 = "TEST_DSNAME_FULL" // 
+    val expectedDSCode2 = "TEST_DSNAME_FULL2" // 
+    assert(availableCodes.contains(expectedDSCode1))
+    assert(availableCodes.contains(expectedDSCode2))
+
+    // Remove the models
+    val instrumentModelSource = new InstrumentModelSourceFromFile(sc)
+    instrumentModelSource.removeModel(expectedDSCode1)
+    instrumentModelSource.removeModel(expectedDSCode2)
+    assert(!instrumentModelSource.getAvailableModels.contains(expectedDSCode1))
+    assert(!instrumentModelSource.getAvailableModels.contains(expectedDSCode2))
+
+    val result = instance.buildModel(expectedDSCode1, expectedDSCode1)
+    
+    println(s"Received: ${result(expectedDSCode1)._2}")
+    assert(result(expectedDSCode1)._1)
+    println(s"Received: ${result(expectedDSCode2)._2}")
+    assert(result(expectedDSCode2)._1)
+
+    assert(instrumentModelSource.getAvailableModels.contains(expectedDSCode1))
+    assert(instrumentModelSource.getAvailableModels.contains(expectedDSCode2))
+  }
   //
   //
   //

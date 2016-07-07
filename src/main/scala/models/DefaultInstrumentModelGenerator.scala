@@ -85,10 +85,6 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
       .filter { d => availablePrices.contains(d) }
       .foldLeft(Map[String, (Boolean, String)]()) { (map, dsCode) => map + (dsCode -> buildModelForDSCode(dsCode)) }
 
-    // for each remaining dsCode
-    //    join price dataframe to risk factors
-    //    train default model
-    //    persist model and add 
     missingPrices ++ createdModels
   }
 
