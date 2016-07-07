@@ -119,7 +119,6 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
   //
   private def fitModelToTrainingData(dsCode: String, trainDF: DataFrame): (Boolean, String) = {
 
-    val labelColumn = appContext.getString("instrumentPrice.valueColumn")
     // get the estimator
     try {
       val e = getModelEstimator(dsCode, trainDF)
@@ -128,7 +127,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
       // fit the data
       val model = e.fit(regressionDF)
       // persist the model
-      return persistTheModel(dsCode, model)
+      persistTheModel(dsCode, model)
     } catch {
       case allExceptions: Throwable => return (false, s"Failed to generate a model: ${allExceptions.getMessage}")
     }
@@ -157,6 +156,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
       .setEstimatorParamMaps(paramGrid)
       .setEvaluator(new RegressionEvaluator)
       .setNumFolds(5) // Use 'Magic' value = 5
+
   }
 
   //
@@ -169,7 +169,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     } catch {
       case allExceptions: Throwable => return (false, s"Failed to persist the model: ${allExceptions.getMessage}")
     }
-    (true, null)
+    (true, "Model created")
   }
 
   //

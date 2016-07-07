@@ -8,7 +8,7 @@ import main.scala.prices.InstrumentPriceSourceFromFile
 import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.transform.ValueDateTransformer
 
-class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
+class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
   var instance: DefaultInstrumentModelGenerator = _
   //
@@ -45,77 +45,76 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
   override def afterEach() {}
 
   /**
-   * Passing a null risk factor source argument should result in an exception
+   * Generating a model with a null dataset code should result in an exception
    */
-  test("test setting a null risk factor source argument") {
+  test("test generating model with null dataset code") {
 
     intercept[IllegalArgumentException] {
-      instance.riskFactorSource(null)
+      instance.buildModel(null)
     }
   }
 
   /**
-   * Passing a null instrument price source argument should result in an exception
+   * Generating a model with an empty dataset code should result in an exception
    */
-  test("test setting a null instrument price source argument") {
+  test("test generating model with an empty dataset code") {
 
     intercept[IllegalArgumentException] {
-      instance.instrumentPriceSource(null)
+      instance.buildModel("")
     }
   }
 
   /**
-   * Passing a null instrument model source argument should result in an exception
+   * Generating a model without required dependencies should result in an exception
    */
-  test("test setting a null instrument model source argument") {
+  test("test generating model without setting dependencies") {
 
-    intercept[IllegalArgumentException] {
-      instance.instrumentModelSource(null)
+    instance = new DefaultInstrumentModelGenerator(sc)
+    intercept[IllegalStateException] {
+      instance.buildModel("AnyString")
     }
   }
 
   /**
-   * Default setup should mean that hasSources is true
+   * Generating a model with an empty factors file
    */
-  test("test the default setup returns true for hasSources") {
+  test("test generating model without risk factors data") {
 
-    assert(instance.hasSources)
+    factorsFileName = "\"factors.clean.empty.csv\""
+    generateContextFileContents
+    generateAppContext
+    generateDefaultInstance
+
+    val expectedDSCode = "AnyString"
+    val result = instance.buildModel(expectedDSCode)
+    assert(!result(expectedDSCode)._1)
   }
 
   /**
-   * Setup without an instrument model source argument should mean that hasSources is false
+   * Generating a model with no dataset code prices
    */
-  test("test setup without an instrument model source argument") {
+  test("test generating model without dataset price data") {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
-    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
-    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
-    assert(!instance.hasSources)
+    val expectedDSCode = "AnyString"
+    val result = instance.buildModel(expectedDSCode)
+    assert(!result(expectedDSCode)._1)
+
   }
 
   /**
-   * Setup without an instrument model price argument should mean that hasSources is false
+   * Generating a model with existing code prices
    */
-  test("test setup without an instrument price source argument") {
+  test("test generating model with existing dataset price data") {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
-    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
-    assert(!instance.hasSources)
+    val availableCodes = new InstrumentPriceSourceFromFile(sc).getAvailableCodes()
+    val expectedDSCode = "TEST_DSNAME_FULL" // 
+    assert(availableCodes.contains(expectedDSCode))
+    val result = instance.buildModel(expectedDSCode)
+    println(s"Received: ${result(expectedDSCode)._2}")
+    assert(result(expectedDSCode)._1)
+
   }
 
-  /**
-   * Setup without an risk factor source argument should mean that hasSources is false
-   */
-  test("test setup without a risk factor source argument") {
-
-    instance = new DefaultInstrumentModelGenerator(sc)
-    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
-    assert(!instance.hasSources)
-  }
-
- 
   //
   //
   //
