@@ -24,7 +24,7 @@ class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSou
   //
   lazy val hdfsLocation = appContext.getString("fs.default.name")
   lazy val fileLocation = appContext.getString("portfolioHolding.fileLocation")
-  lazy val portfolioFileType = appContext.getString("portfolioHolding.priceFileType")
+  lazy val portfolioFileType = appContext.getString("portfolioHolding.portfolioFileType")
   lazy val keyColumn = appContext.getString("portfolioHolding.keyColumn")
   lazy val valueColumn = appContext.getString("portfolioHolding.valueColumn")
   //
@@ -51,8 +51,17 @@ class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSou
     }
     found
   }
- 
-  override def getHoldings(portfolioCode: String, at: LocalDate): DataFrame = throw new UnsupportedOperationException("Not implemented")
+
+  override def getHoldings(portfolioCode: String, at: LocalDate): DataFrame = {
+
+    if (portfolioCode == null || portfolioCode.isEmpty()) {
+      throw new IllegalArgumentException(s"An invalid portfolio code was supplied: ${portfolioCode}")
+    }
+    if (at == null) {
+      throw new IllegalArgumentException(s"An invalid value at date was supplied: ${at}")
+    }
+    null
+  }
 
   /**
    * Add a Transformer to the sequence

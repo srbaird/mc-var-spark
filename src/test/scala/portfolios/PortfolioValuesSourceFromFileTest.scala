@@ -1,12 +1,14 @@
 package test.scala.portfolios
 
-import main.scala.prices.PortfolioValuesSourceFromFile
-import test.scala.application.SparkTestBase
+import java.time.LocalDate
+
 import main.scala.application.ApplicationContext
+import main.scala.prices.PortfolioValuesSourceFromFile
 import main.scala.transform.ValueDateTransformer
+import test.scala.application.SparkTestBase
 
 class PortfolioValuesSourceFromFileTest extends SparkTestBase {
-  
+
   var instance: PortfolioValuesSourceFromFile = _
   //
   var fileLocation: String = _
@@ -32,15 +34,17 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
 
   // Prevent the Spark Context being recycled
   override def afterEach() {}
-  
-    /**
+
+  /**
    * Get a list of the portfolio codes contained in the non-populated test directory
    */
   test("list the available portfolio codes from an empty directory") {
 
     // Reset the application context so that the instance reads from a known empty directory
-    fileLocation = "\"/project/test/initial-testing/portfolios/intentionally-empty-for-testing--do-NOT-populate/\""
-    beforeEach
+    fileLocation = "\"/project/test/initial-testing/intentionally-empty-for-testing--do-NOT-populate/\""
+    generateContextFileContents
+    generateAppContext
+    generateDefaultInstance
 
     val result = instance.getAvailableCodes()
     assert(result.isEmpty)
@@ -50,12 +54,42 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
    */
   test("list the available portfolio codes from a populated directory") {
 
-    val expectedPCode = "TEST_PNAME"
+    val expectedPCode = "Test_Portfolio_1"
     val result = instance.getAvailableCodes()
     assert(!result.isEmpty)
     assert(result.contains(expectedPCode))
-
   }
+
+  /**
+   * Passing a null portfolio code argument should result in an exception
+   */
+  test("test getting holdings with a null portfolio code") {
+
+    intercept[IllegalArgumentException] {
+      instance.getHoldings(null, LocalDate.of(2106, 5, 1))
+    }
+  }
+
+  /**
+   * Passing an empty portfolio code argument should result in an exception
+   */
+  test("test getting holdings with an empty portfolio code") {
+
+    intercept[IllegalArgumentException] {
+      instance.getHoldings("", LocalDate.of(2106, 5, 1))
+    }
+  }
+
+  /**
+   * Passing a null at-date code argument should result in an exception
+   */
+  test("test getting holdings with a null at-date code") {
+
+    intercept[IllegalArgumentException] {
+      instance.getHoldings("AnyString", null)
+    }
+  }
+
   //
   // Helper methods to create  valid test environment
   //
