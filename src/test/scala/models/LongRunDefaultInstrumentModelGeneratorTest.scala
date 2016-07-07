@@ -126,7 +126,7 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
   /**
    * Generating a model with existing code prices
    */
-  test("test generating model with existing dataset price data") {
+  test("test generating two models with existing dataset price data") {
 
     val availableCodes = new InstrumentPriceSourceFromFile(sc).getAvailableCodes()
 
