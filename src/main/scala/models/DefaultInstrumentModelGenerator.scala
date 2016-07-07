@@ -152,7 +152,6 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
       .setEstimatorParamMaps(paramGrid)
       .setEvaluator(new RegressionEvaluator)
       .setNumFolds(5) // Use 'Magic' value = 5
-
   }
 
   //
