@@ -134,6 +134,8 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
     val expectedDate = LocalDate.of(2016, 5, 1)
     val result = instance.getHoldings(expectedPCode, expectedDate)
     assert(result.count() == 1)
+//    val v = result.head().getDate(5)
+//    assert(v == expectedDate)
   }
 
   //
