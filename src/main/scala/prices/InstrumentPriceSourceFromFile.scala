@@ -83,7 +83,6 @@ class InstrumentPriceSourceFromFile(sc: SparkContext) extends InstrumentPriceSou
         val toDate = java.sql.Date.valueOf(to)
         df.filter(df(keyColumn).geq(fromDate)).filter(df(keyColumn).leq(toDate))
       }
-
     } else {
       val fromDate = java.sql.Date.valueOf(from)
       val df = getPrices(dsCode)

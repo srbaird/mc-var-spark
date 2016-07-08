@@ -1,11 +1,12 @@
 package test.scala.portfolios
 
 import java.time.LocalDate
-
+import org.apache.spark.annotation.Experimental
 import main.scala.application.ApplicationContext
 import main.scala.prices.PortfolioValuesSourceFromFile
 import main.scala.transform.ValueDateTransformer
 import test.scala.application.SparkTestBase
+import org.apache.spark.sql.types.DataTypes
 
 class PortfolioValuesSourceFromFileTest extends SparkTestBase {
 
@@ -15,6 +16,7 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
   var portfolioFileType: String = _
   var keyColumn: String = _
   var valueColumn: String = _
+  var instrumentColumn: String = _
 
   override def beforeAll(): Unit = {
 
@@ -66,7 +68,7 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
   test("test getting holdings with a null portfolio code") {
 
     intercept[IllegalArgumentException] {
-      instance.getHoldings(null, LocalDate.of(2106, 5, 1))
+      instance.getHoldings(null, LocalDate.of(2016, 5, 1))
     }
   }
 
@@ -76,7 +78,7 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
   test("test getting holdings with an empty portfolio code") {
 
     intercept[IllegalArgumentException] {
-      instance.getHoldings("", LocalDate.of(2106, 5, 1))
+      instance.getHoldings("", LocalDate.of(2016, 5, 1))
     }
   }
 
@@ -90,6 +92,50 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
     }
   }
 
+  /**
+   * Passing an unknown portfolio code argument should result in an exception
+   */
+  test("test getting holdings with an unknown portfolio code") {
+
+    intercept[IllegalStateException] {
+      instance.getHoldings("AnyString", LocalDate.of(2016, 5, 1))
+    }
+  }
+
+  /**
+   * Get the holdings at a date in the far past should result in an empty data frame
+   */
+  test("test getting holdings at a date in the far past") {
+
+    val expectedPCode = "Test_Portfolio_1"
+    val expectedDate = LocalDate.of(1900, 1, 1)
+    val result = instance.getHoldings(expectedPCode, expectedDate)
+    assert(result.count() == 0)
+  }
+
+  /**
+   * Get the holdings at a date in the far future should result in a data frame with a single row
+   * for each instrument
+   */
+  test("test getting holdings at a date in the far future") {
+
+    val expectedPCode = "Test_Portfolio_1"
+    val expectedDate = LocalDate.of(2900, 1, 1)
+    val result = instance.getHoldings(expectedPCode, expectedDate)
+    assert(result.count() == 1)
+  }
+  
+    /**
+   * Get the holdings at a date in the file
+   */
+  test("test getting holdings at a date in the file") {
+
+    val expectedPCode = "Test_Portfolio_1"
+    val expectedDate = LocalDate.of(2016, 5, 1)
+    val result = instance.getHoldings(expectedPCode, expectedDate)
+    assert(result.count() == 1)
+  }
+
   //
   // Helper methods to create  valid test environment
   //
@@ -99,12 +145,14 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
     portfolioFileType = "\".csv\""
     keyColumn = "\"valueDate\""
     valueColumn = "\"value\""
+    instrumentColumn = "\"dsCode\""
   }
 
   private def generateContextFileContents: String = {
 
     val portfolioSourceContents = s"""portfolioHolding{fileLocation = ${fileLocation}
-                      , portfolioFileType = ${portfolioFileType} , keyColumn = ${keyColumn}, valueColumn = ${valueColumn}}"""
+                      , portfolioFileType = ${portfolioFileType} , keyColumn = ${keyColumn}
+                      , valueColumn = ${valueColumn}, instrumentColumn = ${instrumentColumn}}"""
 
     s"${hadoopAppContextEntry}, ${portfolioSourceContents}" // Prepend the Hadoop dependencies
   }

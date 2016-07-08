@@ -127,7 +127,7 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
   test("test reading by date with a null dataset code argument") {
 
     intercept[IllegalArgumentException] {
-      instance.getPrices(null, LocalDate.of(2106, 5, 1))
+      instance.getPrices(null, LocalDate.of(2016, 5, 1))
     }
   }
 

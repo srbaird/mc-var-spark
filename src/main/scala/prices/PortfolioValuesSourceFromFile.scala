@@ -1,9 +1,7 @@
 package main.scala.prices
 
 import java.time.LocalDate
-
 import scala.Vector
-
 import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -11,10 +9,12 @@ import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.DataFrame
-
 import main.scala.application.ApplicationContext
 import main.scala.portfolios.PortfolioValuesSource
 import main.scala.transform.Transformable
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DataTypes
 
 class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSource[DataFrame] with Transformable {
 
@@ -22,11 +22,12 @@ class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSou
   //
   // Context variables to locate the data
   //
-  lazy val hdfsLocation = appContext.getString("fs.default.name")
+  //  lazy val hdfsLocation = appContext.getString("fs.default.name")
   lazy val fileLocation = appContext.getString("portfolioHolding.fileLocation")
   lazy val portfolioFileType = appContext.getString("portfolioHolding.portfolioFileType")
   lazy val keyColumn = appContext.getString("portfolioHolding.keyColumn")
   lazy val valueColumn = appContext.getString("portfolioHolding.valueColumn")
+  lazy val instrumentColumn = appContext.getString("portfolioHolding.instrumentColumn")
   //
   private val logger = Logger.getLogger(getClass)
   //
@@ -60,7 +61,34 @@ class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSou
     if (at == null) {
       throw new IllegalArgumentException(s"An invalid value at date was supplied: ${at}")
     }
-    null
+    if (!getAvailableCodes().contains(portfolioCode)) {
+      throw new IllegalStateException(s"No portfolio holdings exist for the given code: ${portfolioCode}")
+    }
+    // Load the appropriate file
+    // Use the DataBricks implementation
+
+    val hdfsContext = ApplicationContext.getHadoopConfig
+    val hdfsLocation = hdfsContext.getTrimmed("fs.default.name")
+    val csvReadFormat = "com.databricks.spark.csv"
+    val fileURI = s"${hdfsLocation}${fileLocation}${portfolioCode}${portfolioFileType}"
+    val sqlc = new SQLContext(sc)
+
+    val df = sqlc.read
+      .format(csvReadFormat)
+      .option("header", "true") // Use first line of all files as header
+      .option("inferSchema", "true") // Automatically infer data types
+      .load(fileURI)
+
+    val atDate = java.sql.Date.valueOf(at)
+    // Create a temp table (!) containing a single row for each instrument
+    // Uses the maximum value date that is less than or equal to the at-date
+    
+    val dfJoin = df.filter((df(keyColumn).cast(DataTypes.DateType)).leq(atDate))      // remove future dates
+      .groupBy(instrumentColumn)                           // for each instrument...
+      .agg(max(df.col(keyColumn)))                         // ... get the maximum date
+      .withColumnRenamed(s"max(${keyColumn})", keyColumn)  // rename the columns back to their original values 
+      
+    transform(df.join(dfJoin, dfJoin.columns))             // Join the dataset to the temp table 
   }
 
   /**
