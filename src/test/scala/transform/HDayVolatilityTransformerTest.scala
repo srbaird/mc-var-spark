@@ -62,7 +62,7 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = new HDayVolatilityTransformer()
+    instance = new HDayVolatilityTransformer(sc)
   }
 
   private def generateAppContext {

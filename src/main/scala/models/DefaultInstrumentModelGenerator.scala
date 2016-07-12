@@ -15,19 +15,30 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.ml.tuning.CrossValidator
 import org.apache.spark.ml.evaluation.RegressionEvaluator
+import main.scala.transform.Transformable
+import org.apache.spark.ml.Transformer
 
 /**
  * For want of a better name, the default model generator for data sets
  */
-class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelGenerator with InstrumentModelGeneratorSources[DataFrame, Model[_]] {
+class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelGenerator
+    with InstrumentModelGeneratorSources[DataFrame, Model[_]] with Transformable {
 
+  //
+  // For the implementation of Transformable
+  //
+  private var transformers = Vector[Transformer]()
+  //
   // Source of Market Risk Factor data (features)
+  //
   private var factors: RiskFactorSource[DataFrame] = _
-
+  //
   // Source of Instrument prices data (label)
+  //
   private var prices: InstrumentPriceSource[DataFrame] = _
-
+  //
   // Destination of generated models
+  //
   private var models: InstrumentModelSource[Model[_]] = _
 
   private val noFactorsMsg = "No risk factors data was found"
@@ -88,6 +99,30 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     missingPrices ++ createdModels
   }
 
+  /**
+   * Add a Transformer to the sequence
+   */
+  override def add(t: Transformer): Unit = {
+
+    // don't allow a null value to be added
+    if (t == null) {
+      throw new IllegalArgumentException(s"Cannot add a null value")
+    }
+    transformers = transformers :+ t
+  }
+
+  /**
+   * Apply available transformers in sequence
+   */
+  override def transform(d: DataFrame): DataFrame = {
+
+    if (transformers.isEmpty) {
+      d
+    } else {
+      transformers.foldLeft(d)((acc, t) => t.transform(acc))
+    }
+  }
+
   //
   private def validateSource(source: Any) = if (source == null) throw new IllegalArgumentException(s"Invalid supplied source ${}")
 
@@ -95,7 +130,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
   private def buildModelForDSCode(dsCode: String): (Boolean, String) = {
 
     try {
-      val trainDF = featureDataFrameForDSCode(dsCode)
+      val trainDF = transform(featureDataFrameForDSCode(dsCode))  // apply any supplied additional transformations
       return fitModelToTrainingData(dsCode, trainDF)
     } catch {
       case allExceptions: Throwable => return (false, s"Failed to generate a training dataframe: ${allExceptions.getMessage}")
