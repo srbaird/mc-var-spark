@@ -6,6 +6,9 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.ml.param.ParamMap
 
+/**
+ * 
+ */
 class HDayVolatilityTransformer(override val uid: String) extends Transformer {
 
   def this() = this(Identifiable.randomUID("hdvt"))
