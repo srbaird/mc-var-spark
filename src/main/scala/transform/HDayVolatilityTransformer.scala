@@ -10,25 +10,71 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.DataTypes
-
+import main.scala.application.ApplicationContext
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SQLContext
 /**
  *
  */
 class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) extends Transformer {
 
   def this(sc: SparkContext) = this(sc, Identifiable.randomUID("hdvt"))
+  //
+  //
+  //
+  val sqlc = new SQLContext(sc)
+  //
+  //
+  //
+  private val appContext = ApplicationContext.getContext
+  //
+  //
+  //
+  lazy val hDayValue = appContext.getString("hDayVolatility.hDayValue").toInt
+
+  // Implicit and Explicit conversions to Double
+  // From https://gist.github.com/frgomes/c6bf34eeb5ae1769b072 -  Added String
+  //
+  def toDouble: (Any) => Double = { case i: Int => i case f: Float => f case d: Double => d case s: String => s.toDouble }
+
+  //
+  // Apply a function by column over a window onto a 2D matrix of doubles
+  //
+  def window(s: Int, m: Array[Array[Double]], f: Seq[Double] => Double): Array[Array[Double]] = {
+    m.transpose.map { r => r.sliding(s).map { w => f(w) }.toArray }.transpose
+  }
+  //
+  // Collect a DataFrame into an 2D Array of Doubles
+  //
+  def dfToArrayMatrix(df: DataFrame): Array[Array[Double]] = {
+
+    df.collect.toArray.map { row => row.toSeq.toArray.map { x => toDouble(x).asInstanceOf[Double] } }
+  }
 
   /**
-   * Take the DataFrame and return an h-day volatility data set
+   * Take the DataFrame and return an h-day volatility data frame
    */
   override def transform(df: DataFrame): DataFrame = {
 
     if (df == null) {
       throw new IllegalArgumentException(s"Invalid data frame supplied: ${df}")
     }
+    //
+    // Validate the schema
+    //
     val tSchema = transformSchema(df.schema)
-    
-    null
+    //
+    // Create a matrix from the supplied rows
+    //
+    val dfRowsAsMatrix = dfToArrayMatrix(df)
+    //
+    //  Calculate the volatility (old value - new value)
+    //
+    val hDay = window(hDayValue, dfRowsAsMatrix, w => w.last - w.head)
+    //
+    // Return as a data frame
+    //
+    sqlc.createDataFrame(sc.parallelize(hDay.map { d => Row(d) }), tSchema)
   }
 
   /**

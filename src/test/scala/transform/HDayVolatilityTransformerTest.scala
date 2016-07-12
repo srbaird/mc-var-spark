@@ -30,11 +30,7 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
 
     generateContextFileContentValues
 
-    generateContextFileContents
-
-    generateAppContext
-
-    generateDefaultInstance
+    resetTestEnvironment
   }
 
   // Prevent the Spark Context being recycled
@@ -85,18 +81,43 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
     assert(result == validSchema)
 
   }
-  
-    /**
+
+  /**
    * Invoking transform with a data frame generated from an invalid schema should result in an exception
    */
   test("transform a data frame with an invalid schema ") {
 
     val invalidSchema = StructType(Array(StructField("InvalidField", DataTypes.DateType)))
     val emptyDF = sqlc.createDataFrame(new ArrayList[Row](), invalidSchema)
-    
+
     intercept[IllegalArgumentException] {
       instance.transform(emptyDF)
     }
+  }
+
+  /**
+   * Transform a single column 2-row data frame into a 1 row data frame
+   */
+  test("transform a single column 2-row data frame into a single row data frame") {
+
+    val validSchema = StructType(Array(StructField("SingleColumn", DataTypes.DoubleType)))
+
+    val dfRows = Array(Row(2D), Row(3D))
+    val testDF = sqlc.createDataFrame(sc.parallelize(dfRows), StructType(validSchema))
+
+    // Set the h-day value to 2    
+    hDayValue = "\"2\""
+
+    // Reset the test environment
+    resetTestEnvironment
+
+    val result = instance.transform(testDF)
+    
+    assert(result.count() == 1)
+    
+    val expectedColValue = 1 // i.e. 3 - 2
+    val resultColValue = result.head().getDouble(0)
+    assert(expectedColValue == resultColValue)  
   }
 
   //
@@ -129,5 +150,12 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
     } finally {
       configFile.delete()
     }
+  }
+
+  private def resetTestEnvironment = {
+
+    generateContextFileContents
+    generateAppContext
+    generateDefaultInstance
   }
 }
