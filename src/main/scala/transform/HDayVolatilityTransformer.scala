@@ -74,7 +74,7 @@ class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) exte
     //
     // Return as a data frame
     //
-    sqlc.createDataFrame(sc.parallelize(hDay.map { d => Row(d) }), tSchema)
+    sqlc.createDataFrame(sc.parallelize(hDay.map { d => Row.fromSeq(d) }), tSchema)
   }
 
   /**

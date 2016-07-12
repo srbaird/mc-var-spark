@@ -114,7 +114,6 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
     val result = instance.transform(testDF)
     
     assert(result.count() == 1)
-    
     val expectedColValue = 1 // i.e. 3 - 2
     val resultColValue = result.head().getDouble(0)
     assert(expectedColValue == resultColValue)  
