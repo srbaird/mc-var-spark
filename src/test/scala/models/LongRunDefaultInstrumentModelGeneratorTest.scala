@@ -49,8 +49,20 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test generating model with null dataset code") {
 
+    val nullDatasetCode:String = null
     intercept[IllegalArgumentException] {
-      instance.buildModel(null)
+      instance.buildModel(nullDatasetCode)
+    }
+  }
+  
+    /**
+   * Generating a model with a null dataset code array should result in an exception
+   */
+  test("test generating model with null dataset code array") {
+
+    val nullDatasetCode:Array[String] = null
+    intercept[IllegalArgumentException] {
+      instance.buildModel(nullDatasetCode)
     }
   }
 

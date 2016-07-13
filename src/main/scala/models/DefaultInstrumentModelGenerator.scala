@@ -17,6 +17,7 @@ import org.apache.spark.ml.tuning.CrossValidator
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import main.scala.transform.Transformable
 import org.apache.spark.ml.Transformer
+import java.time.LocalDate
 
 /**
  * For want of a better name, the default model generator for data sets
@@ -69,13 +70,21 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
     (factors != null && prices != null && models != null)
   }
 
-  override def buildModel(dsCodes: Seq[String]): Map[String, (Boolean, String)] = {
+  override def buildModel(from: LocalDate, to: LocalDate, dsCodes: Seq[String]): Map[String, (Boolean, String)] = {
 
     val emptyString = ""
     if (dsCodes == null || dsCodes.isEmpty || dsCodes.contains(emptyString) || dsCodes.contains(null)) {
       throw new IllegalArgumentException(s"Invalid dsCode supplied ${}")
     }
+    //
+    // Ensure the dates are in the correct sequence, to-date follows from-date
+    //
+    if (from != null && to != null && from.compareTo(to) > 0) {
+      throw new IllegalArgumentException(s"The from date ${from} exceeded the to date: ${to}")
+    }
+    //
     // assert that the dependencies have been set
+    //
     if (!hasSources) {
       throw new IllegalStateException(s"All dependencies have not been set")
     }
@@ -94,7 +103,7 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
 
     val createdModels = dsCodes
       .filter { d => availablePrices.contains(d) }
-      .foldLeft(Map[String, (Boolean, String)]()) { (map, dsCode) => map + (dsCode -> buildModelForDSCode(dsCode)) }
+      .foldLeft(Map[String, (Boolean, String)]()) { (map, dsCode) => map + (dsCode -> buildModelForDSCode(dsCode, from, to)) }
 
     missingPrices ++ createdModels
   }
@@ -127,10 +136,41 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
   private def validateSource(source: Any) = if (source == null) throw new IllegalArgumentException(s"Invalid supplied source ${}")
 
   //
-  private def buildModelForDSCode(dsCode: String): (Boolean, String) = {
+  private def buildModelForDSCode(dsCode: String, from: LocalDate, to: LocalDate): (Boolean, String) = {
+
+    def getPrices: DataFrame = {
+
+      if (to == null && from == null) {
+
+        prices.getPrices(dsCode)
+
+      } else if (to == null) {
+        prices.getPrices(dsCode, from)
+
+      } else {
+
+        prices.getPrices(dsCode, from, to)
+      }
+    }
+
+    def getFactors: DataFrame = {
+
+      if (to == null && from == null) {
+
+        factors.factors
+
+      } else if (to == null) {
+
+        factors.factors(from)
+
+      } else {
+
+        factors.factors(from, to)
+      }
+    }
 
     try {
-      val trainDF = transform(featureDataFrameForDSCode(dsCode))  // apply any supplied additional transformations
+      val trainDF = transform(featureDataFrameForDSCode(dsCode, getPrices, getFactors)) // apply any supplied additional transformations
       return fitModelToTrainingData(dsCode, trainDF)
     } catch {
       case allExceptions: Throwable => return (false, s"Failed to generate a training dataframe: ${allExceptions.getMessage}")
@@ -140,9 +180,10 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
   //
   // Join the dataset code prices to the risk factors on the price key column
   // 
-  private def featureDataFrameForDSCode(dsCode: String): DataFrame = {
+  private def featureDataFrameForDSCode(dsCode: String, p: DataFrame, f: DataFrame): DataFrame = {
 
-    prices.getPrices(dsCode).join(factors.factors(), getkeyColumn)
+    //    prices.getPrices(dsCode).join(factors.factors(), getkeyColumn)
+    p.join(f, getkeyColumn)
   }
 
   //

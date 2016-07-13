@@ -7,6 +7,7 @@ import test.scala.application.SparkTestBase
 import main.scala.prices.InstrumentPriceSourceFromFile
 import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.transform.ValueDateTransformer
+import java.time.LocalDate
 
 class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
@@ -75,6 +76,16 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
   }
 
   /**
+   * Passing a from-date greater than the to-date argument should result in an exception
+   */
+  test("test reading by date where from-date exceeds to-date") {
+
+    intercept[IllegalArgumentException] {
+      instance.buildModel(LocalDate.of(2016, 5, 2), LocalDate.of(2016, 5, 1), "Any string")
+    }
+  }
+
+  /**
    * Default setup should mean that hasSources is true
    */
   test("test the default setup returns true for hasSources") {
@@ -115,7 +126,6 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
     assert(!instance.hasSources)
   }
 
- 
   //
   //
   //
