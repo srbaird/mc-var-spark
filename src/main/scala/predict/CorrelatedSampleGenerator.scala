@@ -12,7 +12,7 @@ trait CorrelatedSampleGenerator {
   def sampleCorrelated(f: Array[Array[Double]]): Array[Array[Double]] = sampleCorrelated(defaultNumberOfVariates, f)
 
   /**
-   * Generate a n number of variates correlated to the supplied matrix
+   * Generate n number of variates correlated to the supplied matrix
    */
   def sampleCorrelated(n: Long, f: Array[Array[Double]]): Array[Array[Double]]
 
