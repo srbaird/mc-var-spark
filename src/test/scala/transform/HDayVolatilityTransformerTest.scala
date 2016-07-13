@@ -87,7 +87,41 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
    */
   test("transform a data frame with an invalid schema ") {
 
-    val invalidSchema = StructType(Array(StructField("InvalidField", DataTypes.DateType)))
+    val validSchema = StructType(Array(StructField("InvalidField", DataTypes.DateType)))
+    val emptyDF = sqlc.createDataFrame(new ArrayList[Row](), validSchema)
+
+    intercept[IllegalArgumentException] {
+      instance.transform(emptyDF)
+    }
+  }
+
+  /**
+   * Invoking transform with an h-day value less than 1 should result in an exception
+   */
+  test("transform with an h-day value less than 1 ") {
+
+    val validSchema = StructType(Array(StructField("ValidField", DataTypes.DoubleType)))
+
+    val dfRows = Array(Row(2D), Row(3D))
+    val testDF = sqlc.createDataFrame(sc.parallelize(dfRows), StructType(validSchema))
+
+    // Set the h-day value to 0    
+    hDayValue = "\"0\""
+
+    // Reset the test environment
+    resetTestEnvironment
+
+    intercept[IllegalArgumentException] {
+      instance.transform(testDF)
+    }
+  }
+
+  /**
+   * Invoking transform with an h-day value too high for the size of data frame should result in an exception
+   */
+  test("transform a data frame smaller than hDay + 1 ") {
+
+    val invalidSchema = StructType(Array(StructField("ValidField", DataTypes.DoubleType)))
     val emptyDF = sqlc.createDataFrame(new ArrayList[Row](), invalidSchema)
 
     intercept[IllegalArgumentException] {
@@ -105,18 +139,40 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
     val dfRows = Array(Row(2D), Row(3D))
     val testDF = sqlc.createDataFrame(sc.parallelize(dfRows), StructType(validSchema))
 
-    // Set the h-day value to 2    
-    hDayValue = "\"2\""
+    // Set the h-day value to 1    
+    hDayValue = "\"1\""
 
     // Reset the test environment
     resetTestEnvironment
 
     val result = instance.transform(testDF)
-    
+
     assert(result.count() == 1)
     val expectedColValue = 1 // i.e. 3 - 2
     val resultColValue = result.head().getDouble(0)
-    assert(expectedColValue == resultColValue)  
+    assert(expectedColValue == resultColValue)
+  }
+
+  /**
+   * Transform a 2 column 11-row data frame into a 1 row data frame
+   */
+  test("transform a 2 column 11-row data frame into a single row data frame") {
+
+    val validSchema = StructType(Array(StructField("FirstColumn", DataTypes.DoubleType), StructField("SecondColumn", DataTypes.DoubleType)))
+
+    val dfRows = Array(Row.fromSeq(Array(1D, 100D)), Row.fromSeq(Array(2D, 99D)), Row.fromSeq(Array(3D, 98D)), Row.fromSeq(Array(4D, 97D)), Row.fromSeq(Array(5D, 96D)), Row.fromSeq(Array(6D, 95D)), Row.fromSeq(Array(7D, 94D)), Row.fromSeq(Array(8D, 93D)), Row.fromSeq(Array(9D, 92D)), Row.fromSeq(Array(10D, 91D)), Row.fromSeq(Array(11D, 90D)))
+
+    val testDF = sqlc.createDataFrame(sc.parallelize(dfRows), StructType(validSchema))
+
+    val result = instance.transform(testDF)
+
+    assert(result.count() == 1)
+    val expectedCol1Value = 10 // i.e. 11 - 1
+    val expectedCol2Value = -10 // i.e. 90 - 100
+    val resultCol1Value = result.head().getDouble(0)
+    val resultCol2Value = result.head().getDouble(1)
+    assert(expectedCol1Value == resultCol1Value)
+    assert(expectedCol2Value == resultCol2Value)
   }
 
   //

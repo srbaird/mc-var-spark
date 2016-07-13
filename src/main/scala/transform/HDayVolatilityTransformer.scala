@@ -59,6 +59,10 @@ class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) exte
     if (df == null) {
       throw new IllegalArgumentException(s"Invalid data frame supplied: ${df}")
     }
+    // Number of rows must be greater than zero and exceed the h-day range
+    if (!(hDayValue > 0 ) || !(df.count > hDayValue)) {
+      throw new IllegalArgumentException(s"Insufficient rows (${df.count}) in data frame for h-day value ${hDayValue}")
+    }
     //
     // Validate the schema
     //
@@ -68,9 +72,10 @@ class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) exte
     //
     val dfRowsAsMatrix = dfToArrayMatrix(df)
     //
-    //  Calculate the volatility (old value - new value)
+    //  Calculate the volatility (old value - new value). 
+    //  Note that the window is the h-day value plus 1
     //
-    val hDay = window(hDayValue, dfRowsAsMatrix, w => w.last - w.head)
+    val hDay = window(hDayValue + 1, dfRowsAsMatrix, w => w.last - w.head)
     //
     // Return as a data frame
     //
