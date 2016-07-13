@@ -14,7 +14,9 @@ import main.scala.application.ApplicationContext
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
 /**
- *
+ * Implementation of the Transformer pattern to reduce a factors data frame to 
+ * a data frame of absolute h-day volatility i.e. the difference in value of any data set 
+ * over a period of h-days
  */
 class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) extends Transformer {
 
@@ -52,7 +54,8 @@ class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) exte
   }
 
   /**
-   * Take the DataFrame and return an h-day volatility data frame
+   * Take the DataFrame and return an h-day volatility data frame. The h-value is retrieved from the 
+   * application context as 'hDayVolatility.hDayValue'
    */
   override def transform(df: DataFrame): DataFrame = {
 
@@ -83,7 +86,8 @@ class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) exte
   }
 
   /**
-   * Returns the supplied schema with the column name field as a DateType
+   * Returns the supplied schema only if all data types are Double otherwise an IllegalArgumentException
+   * is thrown
    */
   override def transformSchema(schema: StructType): StructType = {
 
