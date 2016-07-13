@@ -10,6 +10,7 @@ import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.models.InstrumentModelSourceFromFile
 import main.scala.transform.ValueDateTransformer
 import java.time.LocalDate
+import main.scala.transform.DoublesOnlyTransformer
 
 class HDayLongRunModelGeneratorTest extends SparkTestBase {
 
@@ -108,9 +109,11 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
     instance.riskFactorSource(riskFactorSource)
 
     //
-    // Add an HDayVolatilityTransformer to change the type of model generated
+    // Add a DoublesOnlyTransformer to strip out unused columns for ...
+    // ... an HDayVolatilityTransformer to change the type of model generated
     //
-    instance.add(new HDayVolatilityTransformer(sc))
+    instance.add(new DoublesOnlyTransformer())
+    instance.add(new HDayVolatilityTransformer())
 
   }
 

@@ -18,13 +18,9 @@ import org.apache.spark.sql.SQLContext
  * a data frame of absolute h-day volatility i.e. the difference in value of any data set 
  * over a period of h-days
  */
-class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) extends Transformer {
+class HDayVolatilityTransformer(override val uid: String) extends Transformer {
 
-  def this(sc: SparkContext) = this(sc, Identifiable.randomUID("hdvt"))
-  //
-  //
-  //
-  val sqlc = new SQLContext(sc)
+  def this() = this(Identifiable.randomUID("hdvt"))
   //
   //
   //
@@ -82,6 +78,8 @@ class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) exte
     //
     // Return as a data frame
     //
+    val sqlc = df.sqlContext
+    val sc = sqlc.sparkContext
     sqlc.createDataFrame(sc.parallelize(hDay.map { d => Row.fromSeq(d) }), tSchema)
   }
 
@@ -104,6 +102,6 @@ class HDayVolatilityTransformer(sc: SparkContext, override val uid: String) exte
     })
   }
 
-  override def copy(extra: ParamMap): Transformer = new HDayVolatilityTransformer(sc, uid) // Ignore the params for the time being
+  override def copy(extra: ParamMap): Transformer = new HDayVolatilityTransformer(uid) // Ignore the params for the time being
 
 }
