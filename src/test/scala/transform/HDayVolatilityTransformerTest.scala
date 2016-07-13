@@ -18,13 +18,15 @@ class HDayVolatilityTransformerTest extends SparkTestBase {
   var instance: HDayVolatilityTransformer = _
   var sqlc: SQLContext = _
 
+  
+  private var hDayValue: String = _
+  
   override def beforeAll(): Unit = {
 
     super.beforeAll()
 
   }
 
-  private var hDayValue: String = _
 
   override def beforeEach() {
 
