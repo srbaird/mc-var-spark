@@ -3,7 +3,6 @@ package test.scala.factors
 import java.io.File
 import java.io.PrintWriter
 import java.time.LocalDate
-
 import org.apache.spark.LocalSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
@@ -11,49 +10,41 @@ import org.apache.spark.annotation.Experimental
 import org.scalatest.Finders
 import org.scalatest.FunSuite
 import org.scalatest.Suite
-
 import main.scala.application.ApplicationContext
 import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.transform.ValueDateTransformer
+import test.scala.application.SparkTestBase
 
 /**
  * Test the file-backed RiskFactorSource -> DataFrame. The tests are predicated on a file containing a months worth of data
  */
-class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { self: Suite =>
+class RiskFactorSourceFromFileTest extends SparkTestBase {
 
   var instance: RiskFactorSourceFromFile = _
 
-  // Test file details. Some of the test conditions are linked to the contents
-  val hdfsLocation = "\"hdfs://localhost:54310\""
-  val fileLocation = "\"/project/test/initial-testing/\""
-  val factorsFileName = "\"factors.clean.may2016.csv\""
+  var fileLocation:String = _
+  var factorsFileName:String = _
+  
+  // Some of the test conditions are linked to the test file contents
   val testFileLength = 31L
 
-  // TODO: Needs to be pulled to a superclass
+  private var hDayValue: String = _
+
   override def beforeAll(): Unit = {
 
-    // Create the Spark Context for the test suite
-    sc = new SparkContext("local[4]", "RiskFactorSourceFromFileTest", new SparkConf(false))
+    super.beforeAll()
 
-    // Create a temporary config file to specify the test data to use
-    val configFileContents = s"riskFactor{hdfsLocation = ${hdfsLocation}, fileLocation = ${fileLocation}, factorsFileName = ${factorsFileName} }"
-    val configFile = writeTempFile(configFileContents)
-    try {
-      val result = ApplicationContext.useConfigFile(configFile)
-    } finally {
-      configFile.delete()
-    }
   }
-
-  override def afterEach = {}
 
   override def beforeEach() {
 
-   instance = RiskFactorSourceFromFile(sc)
-   instance.add(new ValueDateTransformer())
+    generateContextFileContentValues
+
+    resetTestEnvironment
   }
 
-  override def afterAll = resetSparkContext()
+  // Prevent the Spark Context being recycled
+  override def afterEach() {}
 
   /**
    *
@@ -100,7 +91,7 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
       instance.factors(null)
     }
   }
-  
+
   /**
    * Return all rows in the file
    */
@@ -167,15 +158,45 @@ class RiskFactorSourceFromFileTest extends FunSuite with LocalSparkContext { sel
     assert(result.count() == expectedNumRows)
   }
 
-  /**
-   * Helper methods
-   */
-  private def writeTempFile(content: String): File = {
 
-    val tFile = File.createTempFile("tempConfigFile", null)
-    val pw = new PrintWriter(tFile)
-    pw.write(content)
-    pw.close()
-    tFile
+  //
+  // Helper methods
+  //
+  private def generateContextFileContentValues = {
+
+
+   fileLocation = "\"/project/test/initial-testing/\""
+   factorsFileName = "\"factors.clean.may2016.csv\""
+
+  }
+
+  private def generateContextFileContents: String = {
+
+    val factorConfigFileContents = s"riskFactor{fileLocation = ${fileLocation}, factorsFileName = ${factorsFileName} }"
+    s"${hadoopAppContextEntry}, ${factorConfigFileContents}" // Prepend the Hadoop dependencies
+
+  }
+
+  private def generateDefaultInstance = {
+
+    instance = RiskFactorSourceFromFile(sc)
+    instance.add(new ValueDateTransformer())
+  }
+
+  private def generateAppContext {
+
+    val configFile = writeTempFile(generateContextFileContents)
+    try {
+      val result = ApplicationContext.useConfigFile(configFile)
+    } finally {
+      configFile.delete()
+    }
+  }
+
+  private def resetTestEnvironment = {
+
+    generateContextFileContents
+    generateAppContext
+    generateDefaultInstance
   }
 }

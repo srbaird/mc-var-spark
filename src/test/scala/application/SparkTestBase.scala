@@ -40,6 +40,9 @@ abstract class SparkTestBase extends FunSuite with LocalSparkContext { self: Sui
     sc = new SparkContext("local[4]", "RiskFactorSourceFromFileTest", new SparkConf(false))
 
   }
+  
+  override def afterAll = resetSparkContext
+
 
   /**
    * Helper methods
