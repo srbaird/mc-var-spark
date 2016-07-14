@@ -122,13 +122,37 @@ class CholeskyCorrelatedSampleGeneratorTest extends SparkTestBase { self: Suite 
     val colNameToDrop = "valueDate" // Used as a key in joins to instrument prices
     val factors = RiskFactorSourceFromFile(sc)
     val f = factors.factors(LocalDate.of(2015, 6, 1), LocalDate.of(2016, 5, 31)).drop(colNameToDrop)
+
+    val fAsMatrix = dfToArrayMatrix(f)
+
     val result = instance.sampleCorrelated(dfToArrayMatrix(f))
 
     val expectedNumberOfSamples = f.columns.length
 
     assert(result.length == 1)
     assert(result(0).length == expectedNumberOfSamples)
+  }
 
+  /**
+   * Test sampling 10000 rows from the risk factors source
+   */
+  test("test sampling 10000 rows from the risk factors source from 01Jun15 to 31May16") {
+
+    val colNameToDrop = "valueDate" // Used as a key in joins to instrument prices
+    val factors = RiskFactorSourceFromFile(sc)
+    val f = factors.factors(LocalDate.of(2015, 6, 1), LocalDate.of(2016, 5, 31)).drop(colNameToDrop)
+
+    val numRowsToCreate = 10000L
+    val expectedNumberOfSamples = f.columns.length
+
+    val startTime = System.currentTimeMillis()
+    val result = instance.sampleCorrelated(numRowsToCreate, dfToArrayMatrix(f))
+    val endTime = System.currentTimeMillis()
+    
+    System.out.println(s"${numRowsToCreate} rows took ${endTime - startTime}(ms)")
+
+    assert(result.length == numRowsToCreate)
+    assert(result(0).length == expectedNumberOfSamples)
   }
 
   //
