@@ -24,9 +24,9 @@ case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[D
   val appContext = ApplicationContext.getContext
 
   // Locate data
-  val hdfsLocation = appContext.getString("riskFactor.hdfsLocation")
-  val fileLocation = appContext.getString("riskFactor.fileLocation")
-  val factorsFileName = appContext.getString("riskFactor.factorsFileName")
+  val hdfsLocation = appContext.getString("fs.default.name")
+  lazy val fileLocation = appContext.getString("riskFactor.fileLocation")
+  lazy val factorsFileName = appContext.getString("riskFactor.factorsFileName")
   //
   private val logger = Logger.getLogger(RiskFactorSourceFromFile.getClass)
   //
