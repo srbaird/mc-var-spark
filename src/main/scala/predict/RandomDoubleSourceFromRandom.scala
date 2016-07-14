@@ -5,6 +5,6 @@ import org.apache.commons.math3.random.RandomGenerator
 
 class RandomDoubleSourceFromRandom(r:RandomGenerator) extends RandomDoubleSource{
   
-  override  def nextDouble:Double = r.nextDouble
+  override  def nextDouble:Double = r.nextDouble 
   
 }

@@ -8,7 +8,20 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix
 
 class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends CorrelatedSampleGenerator {
 
+  /**
+   * 
+   */
   override def sampleCorrelated(n: Long, f: Array[Array[Double]]): Array[Array[Double]] = {
+
+    // The number of rows must be at least 1
+    if (!(n >= 1)) {
+      throw new IllegalArgumentException(s"Invalid number of rows supplied: ${n}")
+    }
+
+    // The factor array must not be null or empty
+    if (f == null|| f.isEmpty) {
+      throw new IllegalArgumentException(s"Invalid factor matrix supplied: ${n}")
+    }
 
     val c = new Covariance(f)
     val fCovariance = c.getCovarianceMatrix
@@ -24,7 +37,7 @@ class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends Correlate
     //
     val observations = (1L to n).map(l => (1 to numOfFactors).map(i => r.nextDouble).toArray).toArray
     //
-    // Convert to MAtrix for multiplication
+    // Convert to Matrix for multiplication
     //
     val observationsAsMAtrix = new Array2DRowRealMatrix(observations)
     //
