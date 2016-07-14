@@ -9,15 +9,38 @@ import main.scala.predict.RandomDoubleSource
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.BeforeAndAfterAll
 import main.scala.predict.RandomDoubleSourceFromRandom
+import test.scala.application.SparkTestBase
+import main.scala.transform.HDayVolatilityTransformer
+import main.scala.application.ApplicationContext
+import main.scala.predict.RandomDoubleSourceFromRandom
+import main.scala.factors.RiskFactorSourceFromFile
+import java.time.LocalDate
+import main.scala.util.Functions.dfToArrayMatrix
 
-class CholeskyCorrelatedSampleGeneratorTest extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll { self: Suite =>
+class CholeskyCorrelatedSampleGeneratorTest extends SparkTestBase { self: Suite =>
 
   var instance: CholeskyCorrelatedSampleGenerator = _
 
+  var factorsFileLocation: String = _
+  var factorsFileName: String = _
+
+  private var hDayValue: String = _
+
+  override def beforeAll(): Unit = {
+
+    super.beforeAll()
+
+  }
+
   override def beforeEach() {
 
-    instance = new CholeskyCorrelatedSampleGenerator(new RandomDoubleSourceFromRandom(new ISAACRandom()))
+    generateContextFileContentValues
+
+    resetTestEnvironment
   }
+
+  // Prevent the Spark Context being recycled
+  override def afterEach() {}
 
   /**
    * Invoking sample with a null number of rows less than 1 should result in an exception
@@ -91,6 +114,23 @@ class CholeskyCorrelatedSampleGeneratorTest extends FunSuite with BeforeAndAfter
     result.foreach { r => r.foreach { v => assert(v == expectedResult(result(0).indexOf(v))) } }
   }
 
+  /**
+   * Test sampling from the risk factors source
+   */
+  test("test sampling from the risk factors source from 01Jun15 to 31May16") {
+
+    val colNameToDrop = "valueDate" // Used as a key in joins to instrument prices
+    val factors = RiskFactorSourceFromFile(sc)
+    val f = factors.factors(LocalDate.of(2015, 6, 1), LocalDate.of(2016, 5, 31)).drop(colNameToDrop)
+    val result = instance.sampleCorrelated(dfToArrayMatrix(f))
+
+    val expectedNumberOfSamples = f.columns.length
+
+    assert(result.length == 1)
+    assert(result(0).length == expectedNumberOfSamples)
+
+  }
+
   //
   // 
   //
@@ -101,6 +141,48 @@ class CholeskyCorrelatedSampleGeneratorTest extends FunSuite with BeforeAndAfter
     private var index = -1
     override def nextDouble: Double = { index += 1; fixedRandoms(index % 3) }
 
+  }
+
+  private def generateContextFileContentValues = {
+
+    factorsFileLocation = "\"/project/test/initial-testing/\""
+    factorsFileName = "\"factors.clean.csv\""
+
+    hDayValue = "\"10\""
+
+  }
+
+  private def generateContextFileContents: String = {
+
+    val factorsSourceContents = s"riskFactor{ fileLocation = ${factorsFileLocation}, factorsFileName = ${factorsFileName} }"
+
+    val hDayVolatilityTransformerConfig = s"hDayVolatility{hDayValue = ${hDayValue}}"
+
+    val configFileContents = s"${factorsSourceContents}"
+    s"${hadoopAppContextEntry}, ${configFileContents}" // Prepend the Hadoop dependencies
+
+  }
+
+  private def generateDefaultInstance = {
+
+    instance = new CholeskyCorrelatedSampleGenerator(new RandomDoubleSourceFromRandom(new ISAACRandom))
+  }
+
+  private def generateAppContext {
+
+    val configFile = writeTempFile(generateContextFileContents)
+    try {
+      val result = ApplicationContext.useConfigFile(configFile)
+    } finally {
+      configFile.delete()
+    }
+  }
+
+  private def resetTestEnvironment = {
+
+    generateContextFileContents
+    generateAppContext
+    generateDefaultInstance
   }
 
 }

@@ -13,6 +13,8 @@ import org.apache.spark.sql.types.DataTypes
 import main.scala.application.ApplicationContext
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
+import main.scala.util.Functions._
+
 /**
  * Implementation of the Transformer pattern to reduce a factors data frame to 
  * a data frame of absolute h-day volatility i.e. the difference in value of any data set 
@@ -30,24 +32,6 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
   //
   lazy val hDayValue = appContext.getString("hDayVolatility.hDayValue").toInt
 
-  // Implicit and Explicit conversions to Double
-  // From https://gist.github.com/frgomes/c6bf34eeb5ae1769b072 -  Added String
-  //
-  def toDouble: (Any) => Double = { case i: Int => i case f: Float => f case d: Double => d case s: String => s.toDouble }
-
-  //
-  // Apply a function by column over a window onto a 2D matrix of doubles
-  //
-  def window(s: Int, m: Array[Array[Double]], f: Seq[Double] => Double): Array[Array[Double]] = {
-    m.transpose.map { r => r.sliding(s).map { w => f(w) }.toArray }.transpose
-  }
-  //
-  // Collect a DataFrame into an 2D Array of Doubles
-  //
-  def dfToArrayMatrix(df: DataFrame): Array[Array[Double]] = {
-
-    df.collect.toArray.map { row => row.toSeq.toArray.map { x => toDouble(x).asInstanceOf[Double] } }
-  }
 
   /**
    * Take the DataFrame and return an h-day volatility data frame. The h-value is retrieved from the 
