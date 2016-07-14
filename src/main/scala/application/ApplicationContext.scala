@@ -5,6 +5,7 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import java.io.FileNotFoundException
 import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkContext
 
 /**
  *
@@ -12,6 +13,15 @@ import org.apache.hadoop.conf.Configuration
 object ApplicationContext {
 
   private var _context: Config = _
+  
+  private var _sc:SparkContext = _
+  
+  def sc = _sc
+  def sc(ctx:SparkContext) =  {
+    
+    if (ctx == null) throw new NullPointerException("Supplied context  was null")
+    _sc = ctx
+  }
 
   def getContext: Config = _context
 
