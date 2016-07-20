@@ -20,7 +20,7 @@ import org.apache.spark.sql.SQLContext
  */
 class InstrumentPriceSourceFromFile() extends InstrumentPriceSource[DataFrame] with Transformable {
 
-  val appContext = ApplicationContext.getContext
+  val appContext = ApplicationContext.getContext 
   
   val sc = ApplicationContext.sc
 

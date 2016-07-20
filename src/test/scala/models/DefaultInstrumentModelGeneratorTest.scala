@@ -1,13 +1,14 @@
 package test.scala.models
 
+import java.time.LocalDate
+
 import main.scala.application.ApplicationContext
+import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.models.DefaultInstrumentModelGenerator
 import main.scala.models.InstrumentModelSourceFromFile
-import test.scala.application.SparkTestBase
 import main.scala.prices.InstrumentPriceSourceFromFile
-import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.transform.ValueDateTransformer
-import java.time.LocalDate
+import test.scala.application.SparkTestBase
 
 class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
@@ -32,6 +33,8 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
   }
 
   override def beforeEach() {
+    
+        ApplicationContext.sc(sc)
 
     generateContextFileContentValues
 
@@ -98,9 +101,9 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test setup without an instrument model source argument") {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
-    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
-    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
+    instance = new DefaultInstrumentModelGenerator()
+    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile())
+    instance.riskFactorSource(new RiskFactorSourceFromFile())
     assert(!instance.hasSources)
   }
 
@@ -109,9 +112,9 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test setup without an instrument price source argument") {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
-    instance.riskFactorSource(new RiskFactorSourceFromFile(sc))
+    instance = new DefaultInstrumentModelGenerator()
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile())
+    instance.riskFactorSource(new RiskFactorSourceFromFile())
     assert(!instance.hasSources)
   }
 
@@ -120,9 +123,9 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test setup without a risk factor source argument") {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
-    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile(sc))
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+    instance = new DefaultInstrumentModelGenerator()
+    instance.instrumentPriceSource(new InstrumentPriceSourceFromFile())
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile())
     assert(!instance.hasSources)
   }
 
@@ -158,15 +161,15 @@ class DefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
+    instance = new DefaultInstrumentModelGenerator()
     // TODO: move the dependencies to DI implementation
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile())
 
-    val instrumentPriceSource = new InstrumentPriceSourceFromFile(sc)
+    val instrumentPriceSource = new InstrumentPriceSourceFromFile()
     instrumentPriceSource.add(new ValueDateTransformer)
     instance.instrumentPriceSource(instrumentPriceSource)
 
-    val riskFactorSource = new RiskFactorSourceFromFile(sc)
+    val riskFactorSource = new RiskFactorSourceFromFile()
     riskFactorSource.add(new ValueDateTransformer)
     instance.riskFactorSource(riskFactorSource)
 

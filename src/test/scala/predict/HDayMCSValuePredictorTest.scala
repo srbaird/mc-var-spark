@@ -6,6 +6,9 @@ import test.scala.application.SparkTestBase
 import java.time.LocalDate
 import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.portfolios.PortfolioValuesSourceFromFile
+import main.scala.predict.CholeskyCorrelatedSampleGenerator
+import org.apache.commons.math3.random.ISAACRandom
+import main.scala.predict.RandomDoubleSourceFromRandom
 
 class HDayMCSValuePredictorTest extends SparkTestBase {
 
@@ -88,7 +91,10 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = new HDayMCSValuePredictor(new PortfolioValuesSourceFromFile(), new RiskFactorSourceFromFile())
+    val p = new PortfolioValuesSourceFromFile()
+    val r =  new RiskFactorSourceFromFile()
+    val c = new CholeskyCorrelatedSampleGenerator(new RandomDoubleSourceFromRandom(new ISAACRandom))
+    instance = new HDayMCSValuePredictor(p, r, c )
   }
 
   private def generateAppContext {

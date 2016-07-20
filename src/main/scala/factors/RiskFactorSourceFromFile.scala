@@ -21,12 +21,12 @@ import main.scala.transform.Transformable
  */
 case class RiskFactorSourceFromFile() extends RiskFactorSource[DataFrame] with Transformable {
 
-  val appContext = ApplicationContext.getContext
+  val appContext = ApplicationContext.getContext 
   
   val sc = ApplicationContext.sc
 
   // Locate data
-  val hdfsLocation = appContext.getString("fs.default.name")
+  val hdfsLocation = appContext.getString("fs.default.name") 
   lazy val fileLocation = appContext.getString("riskFactor.fileLocation")
   lazy val factorsFileName = appContext.getString("riskFactor.factorsFileName")
   //

@@ -22,7 +22,7 @@ import java.time.LocalDate
 /**
  * For want of a better name, the default model generator for data sets
  */
-class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelGenerator
+class DefaultInstrumentModelGenerator() extends InstrumentModelGenerator
     with InstrumentModelGeneratorSources[DataFrame, Model[_]] with Transformable {
 
   //
@@ -46,6 +46,8 @@ class DefaultInstrumentModelGenerator(sc: SparkContext) extends InstrumentModelG
   private val noPricesMsg = "No price data found"
 
   private val appContext = ApplicationContext.getContext
+  
+  val sc = ApplicationContext.sc
 
   /**
    *

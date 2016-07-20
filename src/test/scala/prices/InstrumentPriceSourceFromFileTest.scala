@@ -38,7 +38,7 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
     } finally {
       configFile.delete()
     }
-    instance = new InstrumentPriceSourceFromFile(sc) // Needs the Application context to be available
+    instance = new InstrumentPriceSourceFromFile() // Needs the Application context to be available
     instance.add(new ValueDateTransformer())
   }
   /**
@@ -63,7 +63,7 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
     } finally {
       configFile.delete()
     }
-    instance = new InstrumentPriceSourceFromFile(sc) // Recreate the instance to pick up new Application Context
+    instance = new InstrumentPriceSourceFromFile() // Recreate the instance to pick up new Application Context
     val result = instance.getAvailableCodes()
     assert(result.isEmpty)
 

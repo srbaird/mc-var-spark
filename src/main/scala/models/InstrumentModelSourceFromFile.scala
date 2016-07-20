@@ -21,9 +21,11 @@ import com.typesafe.config.ConfigRenderOptions
 /**
  * Persistence layer using HDFS file system
  */
-class InstrumentModelSourceFromFile(sc: SparkContext) extends InstrumentModelSource[Model[_]] {
+class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
   private val appContext = ApplicationContext.getContext
+  
+  val sc = ApplicationContext.sc
 
   // Locate data
   private val hdfsLocation = appContext.getString("fs.default.name")
