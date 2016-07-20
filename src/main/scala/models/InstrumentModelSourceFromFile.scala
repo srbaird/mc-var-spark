@@ -50,6 +50,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
       val f = files.next().getPath.getName
       val dsCode = FilenameUtils.removeExtension(f)
+      
       if (isLoadable(dsCode, fs)) {
         found = found :+ dsCode
       }

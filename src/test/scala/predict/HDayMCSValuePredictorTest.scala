@@ -1,9 +1,7 @@
 package test.scala.predict
 
 import java.time.LocalDate
-
 import org.apache.commons.math3.random.ISAACRandom
-
 import main.scala.application.ApplicationContext
 import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.models.InstrumentModelSourceFromFile
@@ -12,6 +10,9 @@ import main.scala.predict.CholeskyCorrelatedSampleGenerator
 import main.scala.predict.HDayMCSValuePredictor
 import main.scala.predict.RandomDoubleSourceFromRandom
 import test.scala.application.SparkTestBase
+import main.scala.transform.DoublesOnlyTransformer
+import main.scala.transform.HDayVolatilityTransformer
+import main.scala.transform.ValueDateTransformer
 
 class HDayMCSValuePredictorTest extends SparkTestBase {
 
@@ -83,7 +84,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
   test("predict using a test portfolio code") {
 
     val expectedPCode = "Test_Portfolio_1"
-    val expectedAtDate = LocalDate.of(2016, 5, 1)
+    val expectedAtDate = LocalDate.of(2016, 6, 1)
     instance.predict(expectedPCode, expectedAtDate)
   }
 
@@ -95,8 +96,8 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
     hDayValue = "\"10\""
     mcsNumIterations = "\"10000\""
 
-    modelsLocation = "\"/project/test/initial-testing/model/models/\""
-    modelSchemasLocation = "\"/project/test/initial-testing/model/schemas/\""
+    modelsLocation = "\"/project/test/initial-testing/h-models/models/\""
+    modelSchemasLocation = "\"/project/test/initial-testing/h-models/schemas/\""
 
     portfolioFileLocation = "\"/project/test/initial-testing/portfolios/\""
     portfolioFileType = "\".csv\""
@@ -104,8 +105,8 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
     valueColumn = "\"value\""
     instrumentColumn = "\"dsCode\""
 
-    factorsFileLocation = "\"/project/test/initial-testing/\""
-    factorsFileName = "\"factors.clean.may2016.csv\""
+    factorsFileLocation = "\"/project/test/initial-testing//\""
+    factorsFileName = "\"factors.clean.csv\""
 
   }
 
@@ -128,6 +129,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
     // Takes the place of a DI instance
     val p = new PortfolioValuesSourceFromFile()
     val r = new RiskFactorSourceFromFile()
+    r.add(new ValueDateTransformer())
     val c = new CholeskyCorrelatedSampleGenerator(new RandomDoubleSourceFromRandom(new ISAACRandom))
     val m = new InstrumentModelSourceFromFile()
     instance = new HDayMCSValuePredictor(p, r, c, m)

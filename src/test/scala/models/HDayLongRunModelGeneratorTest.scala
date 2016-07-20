@@ -53,11 +53,13 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
    */
   test("test generating a valid dataset code between 01-Jun-2015 and 31-May-2016") {
 
-    val expectedDSCode = "TEST_DSNAME_FULL"
-    val result = instance.buildModel( LocalDate.of(2015, 6, 1), LocalDate.of(2016, 5, 31), expectedDSCode)
+    val expectedDSCode = "WIKI_CMC"
+    val result = instance.buildModel(LocalDate.of(2015, 6, 1), LocalDate.of(2016, 5, 31), expectedDSCode)
     println(s"Test returned ${result(expectedDSCode)._2} for ${expectedDSCode} ")
-   assert(result(expectedDSCode)._1)
-   }
+    assert(result(expectedDSCode)._1)
+  }
+
+
 
   //
   // 
@@ -65,7 +67,7 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
   private def generateContextFileContentValues = {
 
     hdfsLocation = "\"hdfs://localhost:54310\""
-    fileLocation = "\"/project/test/initial-testing/prices/\""
+    fileLocation = "\"/project/test/initial-testing/h-prices/\""
     priceFileType = "\".csv\""
     keyColumn = "\"valueDate\""
     valueColumn = "\"closePrice\""
@@ -73,8 +75,8 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
     modelsLocation = "\"/project/test/initial-testing/h-models/models/\""
     modelSchemasLocation = "\"/project/test/initial-testing/h-models/schemas/\""
 
-    factorsFileLocation = "\"/project/test/initial-testing/\""
-    factorsFileName = "\"factors.clean.csv\""
+    factorsFileLocation = "\"/project/test/initial-testing/h-factors/\""
+    factorsFileName = "\"FACTORS_10-DAY.csv\""
 
     hDayValue = "\"10\""
   }
@@ -129,6 +131,7 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
 
   private def resetTestEnvironment = {
 
+    ApplicationContext.sc(sc)
     generateContextFileContents
     generateAppContext
     generateDefaultInstance

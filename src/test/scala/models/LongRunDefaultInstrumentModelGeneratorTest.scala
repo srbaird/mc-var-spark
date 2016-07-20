@@ -32,6 +32,8 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
   override def beforeEach() {
 
+    ApplicationContext.sc(sc)
+
     generateContextFileContentValues
 
     generateContextFileContents
@@ -49,18 +51,18 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test generating model with null dataset code") {
 
-    val nullDatasetCode:String = null
+    val nullDatasetCode: String = null
     intercept[IllegalArgumentException] {
       instance.buildModel(nullDatasetCode)
     }
   }
-  
-    /**
+
+  /**
    * Generating a model with a null dataset code array should result in an exception
    */
   test("test generating model with null dataset code array") {
 
-    val nullDatasetCode:Array[String] = null
+    val nullDatasetCode: Array[String] = null
     intercept[IllegalArgumentException] {
       instance.buildModel(nullDatasetCode)
     }
@@ -155,7 +157,7 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
     assert(!instrumentModelSource.getAvailableModels.contains(expectedDSCode2))
 
     val result = instance.buildModel(expectedDSCode1, expectedDSCode2)
-    
+
     println(s"Received: ${result(expectedDSCode1)._2}")
     assert(result(expectedDSCode1)._1)
     println(s"Received: ${result(expectedDSCode2)._2}")

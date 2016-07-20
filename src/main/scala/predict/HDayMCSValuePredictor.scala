@@ -10,6 +10,8 @@ import main.scala.util.Functions._
 import org.apache.spark.sql.Row
 import main.scala.models.InstrumentModelSource
 import org.apache.spark.ml.Model
+import main.scala.transform.DoublesOnlyTransformer
+import main.scala.transform.HDayVolatilityTransformer
 
 /**
  * Implement ValuePredictor to return a portfolio value using Monte Carlo simulation with h-day covariance matrix
@@ -41,13 +43,13 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     if (holdings.count() == 0) {
       return Array[(Double, Array[(String, Double)])]() // 
     }
-    holdings.show()
 
     // TODO: implement the portfolio holdings as an array rather than a DataFrame
     val holdingsAsArray = holdings.select(instrumentColumn, valueColumn).collect().map { x => (x.getString(0), x.getInt(1)) }
 
     // If no model exists for any of the instruments then throw an exception
     val availableModels = m.getAvailableModels
+
     val missingModels = holdingsAsArray.map(t => t._1).filter { dsCode => !availableModels.contains(dsCode) }
     if (missingModels.length > 0) {
       throw new IllegalStateException(s"No model for instruments: ${missingModels.mkString(", ")}")
@@ -55,7 +57,13 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
     // Generate a DataFrame of n samples 
     // For correlation purposes use 1 year of factor data
-    val correlationFactors = f.factors(at.minusYears(1))
+    
+    // TODO: remove this to a DI implementation
+    val correlationFactors = new HDayVolatilityTransformer().transform(
+        new DoublesOnlyTransformer().transform(
+            f.factors(at.minusYears(1))))
+    
+    
     val correlationFactorsAsMatrix = dfToArrayMatrix(correlationFactors)
     // 
     val correlatedSamples = c.sampleCorrelated(mcsNumIterations, correlationFactorsAsMatrix)
