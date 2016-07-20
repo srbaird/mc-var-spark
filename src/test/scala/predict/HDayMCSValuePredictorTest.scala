@@ -20,6 +20,18 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
   private var hDayValue: String = _
   private var mcsNumIterations: String = _
 
+  private var modelsLocation: String = _
+  private var modelSchemasLocation: String = _
+
+  private var portfolioFileLocation: String = _
+  private var portfolioFileType: String = _
+  private var keyColumn: String = _
+  private var valueColumn: String = _
+  private var instrumentColumn: String = _
+
+  private var factorsFileLocation: String = _
+  private var factorsFileName: String = _
+
   override def beforeAll(): Unit = {
 
     super.beforeAll()
@@ -82,24 +94,43 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
 
     hDayValue = "\"10\""
     mcsNumIterations = "\"10000\""
+
+    modelsLocation = "\"/project/test/initial-testing/model/models/\""
+    modelSchemasLocation = "\"/project/test/initial-testing/model/schemas/\""
+
+    portfolioFileLocation = "\"/project/test/initial-testing/portfolios/\""
+    portfolioFileType = "\".csv\""
+    keyColumn = "\"valueDate\""
+    valueColumn = "\"value\""
+    instrumentColumn = "\"dsCode\""
+
+    factorsFileLocation = "\"/project/test/initial-testing/\""
+    factorsFileName = "\"factors.clean.may2016.csv\""
+
   }
 
   private def generateContextFileContents: String = {
 
     val hDayVolatilityTransformerConfig = s"hDayVolatility{hDayValue = ${hDayValue}}"
     val mcsConfig = s"mcs{mcsNumIterations = ${mcsNumIterations}}"
-    s"${hadoopAppContextEntry}, ${mcsConfig}, ${hDayVolatilityTransformerConfig}" // Prepend the Hadoop dependencies
+    val modelConfig = s"instrumentModel{ modelsLocation = ${modelsLocation} , modelSchemasLocation = ${modelSchemasLocation}}"
+    val portfolioConfig = s"""portfolioHolding{fileLocation = ${portfolioFileLocation}
+                      , portfolioFileType = ${portfolioFileType} , keyColumn = ${keyColumn}
+                      , valueColumn = ${valueColumn}, instrumentColumn = ${instrumentColumn}}"""
+    val factorsConfig = s"riskFactor{fileLocation = ${factorsFileLocation}, factorsFileName = ${factorsFileName} }"
 
+    s"""${hadoopAppContextEntry}, ${mcsConfig}, ${hDayVolatilityTransformerConfig}, ${mcsConfig}  
+          , ${modelConfig} , ${portfolioConfig} , ${factorsConfig}"""
   }
 
   private def generateDefaultInstance = {
 
     // Takes the place of a DI instance
     val p = new PortfolioValuesSourceFromFile()
-    val r =  new RiskFactorSourceFromFile()
+    val r = new RiskFactorSourceFromFile()
     val c = new CholeskyCorrelatedSampleGenerator(new RandomDoubleSourceFromRandom(new ISAACRandom))
     val m = new InstrumentModelSourceFromFile()
-    instance = new HDayMCSValuePredictor(p, r, c, m )
+    instance = new HDayMCSValuePredictor(p, r, c, m)
   }
 
   private def generateAppContext {
