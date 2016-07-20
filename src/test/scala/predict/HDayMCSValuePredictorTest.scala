@@ -1,14 +1,15 @@
 package test.scala.predict
 
-import main.scala.application.ApplicationContext
-import main.scala.predict.HDayMCSValuePredictor
-import test.scala.application.SparkTestBase
 import java.time.LocalDate
+import org.apache.commons.math3.random.ISAACRandom
+import main.scala.application.ApplicationContext
 import main.scala.factors.RiskFactorSourceFromFile
 import main.scala.portfolios.PortfolioValuesSourceFromFile
 import main.scala.predict.CholeskyCorrelatedSampleGenerator
-import org.apache.commons.math3.random.ISAACRandom
+import main.scala.predict.HDayMCSValuePredictor
 import main.scala.predict.RandomDoubleSourceFromRandom
+import test.scala.application.SparkTestBase
+import main.scala.models.InstrumentModelSourceFromFile
 
 class HDayMCSValuePredictorTest extends SparkTestBase {
 
@@ -94,7 +95,8 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
     val p = new PortfolioValuesSourceFromFile()
     val r =  new RiskFactorSourceFromFile()
     val c = new CholeskyCorrelatedSampleGenerator(new RandomDoubleSourceFromRandom(new ISAACRandom))
-    instance = new HDayMCSValuePredictor(p, r, c )
+    val m = new InstrumentModelSourceFromFile()
+    instance = new HDayMCSValuePredictor(p, r, c, m )
   }
 
   private def generateAppContext {

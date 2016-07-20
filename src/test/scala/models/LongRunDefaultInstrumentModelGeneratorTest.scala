@@ -81,7 +81,7 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test generating model without setting dependencies") {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
+    instance = new DefaultInstrumentModelGenerator()
     intercept[IllegalStateException] {
       instance.buildModel("AnyString")
     }
@@ -118,13 +118,13 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test generating model with existing dataset price data") {
 
-    val availableCodes = new InstrumentPriceSourceFromFile(sc).getAvailableCodes()
+    val availableCodes = new InstrumentPriceSourceFromFile().getAvailableCodes()
 
     val expectedDSCode = "TEST_DSNAME_FULL" // 
     assert(availableCodes.contains(expectedDSCode))
 
     // Remove the model
-    val instrumentModelSource = new InstrumentModelSourceFromFile(sc)
+    val instrumentModelSource = new InstrumentModelSourceFromFile()
     instrumentModelSource.removeModel(expectedDSCode)
     assert(!instrumentModelSource.getAvailableModels.contains(expectedDSCode))
 
@@ -140,7 +140,7 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
    */
   test("test generating two models with existing dataset price data") {
 
-    val availableCodes = new InstrumentPriceSourceFromFile(sc).getAvailableCodes()
+    val availableCodes = new InstrumentPriceSourceFromFile().getAvailableCodes()
 
     val expectedDSCode1 = "TEST_DSNAME_FULL" // 
     val expectedDSCode2 = "TEST_DSNAME_FULL2" // 
@@ -148,7 +148,7 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
     assert(availableCodes.contains(expectedDSCode2))
 
     // Remove the models
-    val instrumentModelSource = new InstrumentModelSourceFromFile(sc)
+    val instrumentModelSource = new InstrumentModelSourceFromFile()
     instrumentModelSource.removeModel(expectedDSCode1)
     instrumentModelSource.removeModel(expectedDSCode2)
     assert(!instrumentModelSource.getAvailableModels.contains(expectedDSCode1))
@@ -196,15 +196,15 @@ class LongRunDefaultInstrumentModelGeneratorTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
+    instance = new DefaultInstrumentModelGenerator()
     // TODO: move the dependencies to DI implementation
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile())
 
-    val instrumentPriceSource = new InstrumentPriceSourceFromFile(sc)
+    val instrumentPriceSource = new InstrumentPriceSourceFromFile()
     instrumentPriceSource.add(new ValueDateTransformer)
     instance.instrumentPriceSource(instrumentPriceSource)
 
-    val riskFactorSource = new RiskFactorSourceFromFile(sc)
+    val riskFactorSource = new RiskFactorSourceFromFile()
     riskFactorSource.add(new ValueDateTransformer)
     instance.riskFactorSource(riskFactorSource)
 

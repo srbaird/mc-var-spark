@@ -96,15 +96,15 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = new DefaultInstrumentModelGenerator(sc)
+    instance = new DefaultInstrumentModelGenerator()
     // TODO: move the dependencies to DI implementation
-    instance.instrumentModelSource(new InstrumentModelSourceFromFile(sc))
+    instance.instrumentModelSource(new InstrumentModelSourceFromFile())
 
-    val instrumentPriceSource = new InstrumentPriceSourceFromFile(sc)
+    val instrumentPriceSource = new InstrumentPriceSourceFromFile()
     instrumentPriceSource.add(new ValueDateTransformer)
     instance.instrumentPriceSource(instrumentPriceSource)
 
-    val riskFactorSource = new RiskFactorSourceFromFile(sc)
+    val riskFactorSource = new RiskFactorSourceFromFile()
     riskFactorSource.add(new ValueDateTransformer)
     instance.riskFactorSource(riskFactorSource)
 

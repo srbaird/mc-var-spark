@@ -33,7 +33,7 @@ class InstrumentModelSourceFromFileTest extends SparkTestBase {
 
   override def beforeEach() {
 
-    instance = new InstrumentModelSourceFromFile(sc)
+    instance = new InstrumentModelSourceFromFile()
   }
 
   /**
