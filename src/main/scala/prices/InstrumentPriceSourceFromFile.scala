@@ -22,7 +22,7 @@ class InstrumentPriceSourceFromFile() extends InstrumentPriceSource[DataFrame] w
 
   val appContext = ApplicationContext.getContext 
   
-  val sc = ApplicationContext.sc
+  val sc = ApplicationContext.sc 
 
   // Locate data
   val hdfsLocation = appContext.getString("fs.default.name")

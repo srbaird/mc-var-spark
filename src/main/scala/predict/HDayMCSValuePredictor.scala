@@ -21,6 +21,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
   val sc = ApplicationContext.sc
 
   lazy val mcsNumIterations = appContext.getLong("mcs.mcsNumIterations")
+  lazy val keyColumn = appContext.getString("portfolioHolding.keyColumn")
 
   override def predict(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
 
@@ -39,8 +40,15 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     if (holdings.count() == 0) {
       return Array[(Double, Array[(String, Double)])]() // 
     }
+    
+    // TODO: implement the portfolio holdings as an array rather than a DataFrame
+    val holdingsAsArray = holdings.select(keyColumn).collect().map { x => (x(0).toString(), toDouble(x(1))) }
 
     // If no model exists for any of the instruments then throw an exception
+    val missingModels = m.getAvailableModels.diff(holdingsAsArray.map(t => t._1))
+    if (missingModels.length > 0) {
+      throw new IllegalStateException(s"No model for instruments: ${missingModels.mkString(", ")}")
+    }
 
     // Generate a DataFrame of n samples 
     // For correlation purposes use 1 year of factor data
@@ -54,9 +62,15 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     val correlatedSamplesAsDF = sqlc.createDataFrame(correlatedSamplesAsRDDOfRows, correlationFactors.schema)
 
     // For each instrument get the appropriate model and predict against the feature samples
-    // U
-
-    throw new UnsupportedOperationException("Not implemented")
+    // Use a for loop initially to restrict the parallelism to the samples dimension
+    var returnArray = Array[(Double, Array[(String, Double)])]() 
+    for (portfolioHolding <- holdingsAsArray) {
+      val dsCode = portfolioHolding._1
+      val holding = portfolioHolding._2
+      val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(correlatedSamplesAsDF).select("prediction")) // TODO: add "prediction" to context file
+      returnArray = predictions.map { p => (p(0) * holding, Array[(String, Double)]((dsCode.toString(), toDouble(p(0))))) }
+    }
+    returnArray
   }
 
 }

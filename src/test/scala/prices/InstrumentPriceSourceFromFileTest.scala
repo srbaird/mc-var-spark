@@ -38,6 +38,7 @@ class InstrumentPriceSourceFromFileTest extends SparkTestBase {
     } finally {
       configFile.delete()
     }
+    ApplicationContext.sc(sc)
     instance = new InstrumentPriceSourceFromFile() // Needs the Application context to be available
     instance.add(new ValueDateTransformer())
   }
