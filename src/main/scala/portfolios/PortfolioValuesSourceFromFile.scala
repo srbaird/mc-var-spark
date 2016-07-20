@@ -1,4 +1,4 @@
-package main.scala.prices
+package main.scala.portfolios
 
 import java.time.LocalDate
 import scala.Vector

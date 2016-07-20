@@ -3,7 +3,7 @@ package test.scala.portfolios
 import java.time.LocalDate
 import org.apache.spark.annotation.Experimental
 import main.scala.application.ApplicationContext
-import main.scala.prices.PortfolioValuesSourceFromFile
+import main.scala.portfolios.PortfolioValuesSourceFromFile
 import main.scala.transform.ValueDateTransformer
 import test.scala.application.SparkTestBase
 import org.apache.spark.sql.types.DataTypes
