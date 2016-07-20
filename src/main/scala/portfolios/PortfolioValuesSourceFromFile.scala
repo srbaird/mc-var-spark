@@ -1,7 +1,9 @@
 package main.scala.portfolios
 
 import java.time.LocalDate
+
 import scala.Vector
+
 import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -9,16 +11,18 @@ import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.DataFrame
-import main.scala.application.ApplicationContext
-import main.scala.portfolios.PortfolioValuesSource
-import main.scala.transform.Transformable
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.max
 import org.apache.spark.sql.types.DataTypes
 
-class PortfolioValuesSourceFromFile(sc: SparkContext) extends PortfolioValuesSource[DataFrame] with Transformable {
+import main.scala.application.ApplicationContext
+import main.scala.transform.Transformable
+
+class PortfolioValuesSourceFromFile extends PortfolioValuesSource[DataFrame] with Transformable {
 
   val appContext = ApplicationContext.getContext
+  
+  val sc = ApplicationContext.sc
   //
   // Context variables to locate the data
   //

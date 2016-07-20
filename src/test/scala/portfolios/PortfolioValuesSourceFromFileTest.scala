@@ -3,10 +3,10 @@ package test.scala.portfolios
 import java.time.LocalDate
 import org.apache.spark.annotation.Experimental
 import main.scala.application.ApplicationContext
-import main.scala.portfolios.PortfolioValuesSourceFromFile
 import main.scala.transform.ValueDateTransformer
 import test.scala.application.SparkTestBase
 import org.apache.spark.sql.types.DataTypes
+import main.scala.portfolios.PortfolioValuesSourceFromFile
 
 class PortfolioValuesSourceFromFileTest extends SparkTestBase {
 
@@ -24,6 +24,8 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
   }
 
   override def beforeEach() {
+
+    ApplicationContext.sc(sc)
 
     generateContextFileContentValues
 
@@ -124,8 +126,8 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
     val result = instance.getHoldings(expectedPCode, expectedDate)
     assert(result.count() == 1)
   }
-  
-    /**
+
+  /**
    * Get the holdings at a date in the file
    */
   test("test getting holdings at a date in the file") {
@@ -134,8 +136,8 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
     val expectedDate = LocalDate.of(2016, 5, 1)
     val result = instance.getHoldings(expectedPCode, expectedDate)
     assert(result.count() == 1)
-//    val v = result.head().getDate(5)
-//    assert(v == expectedDate)
+    //    val v = result.head().getDate(5)
+    //    assert(v == expectedDate)
   }
 
   //
@@ -161,7 +163,7 @@ class PortfolioValuesSourceFromFileTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = new PortfolioValuesSourceFromFile(sc)
+    instance = new PortfolioValuesSourceFromFile()
     // TODO: move the dependencies to DI implementation
     instance.add(new ValueDateTransformer())
   }

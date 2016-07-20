@@ -18,9 +18,11 @@ import org.apache.spark.sql.SQLContext
 /**
  * File backed implementation of InstrumentPriceSource which generates date-price pairs as a DataFrame
  */
-class InstrumentPriceSourceFromFile(sc: SparkContext) extends InstrumentPriceSource[DataFrame] with Transformable {
+class InstrumentPriceSourceFromFile() extends InstrumentPriceSource[DataFrame] with Transformable {
 
   val appContext = ApplicationContext.getContext
+  
+  val sc = ApplicationContext.sc
 
   // Locate data
   val hdfsLocation = appContext.getString("fs.default.name")

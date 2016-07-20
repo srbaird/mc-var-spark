@@ -3,13 +3,15 @@ package test.scala.predict
 import main.scala.application.ApplicationContext
 import main.scala.predict.HDayMCSValuePredictor
 import test.scala.application.SparkTestBase
+import java.time.LocalDate
 
 class HDayMCSValuePredictorTest extends SparkTestBase {
 
   var instance: HDayMCSValuePredictor = _
 
   private var hDayValue: String = _
-
+  private var mcsNumIterations: String = _
+  
   override def beforeAll(): Unit = {
 
     super.beforeAll()
@@ -34,8 +36,8 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
       instance.predict(null, null)
     }
   }
-  
-    /**
+
+  /**
    * Invoking predict with an empty portfolio code should result in an exception
    */
   test("predict with an empty portfolio code") {
@@ -44,8 +46,8 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
       instance.predict("", null)
     }
   }
-  
-      /**
+
+  /**
    * Invoking predict with a null at-date should result in an exception
    */
   test("predict with a null at-date code") {
@@ -55,25 +57,36 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
     }
   }
 
+  /**
+   * Predict using a test portfolio code
+   */
+  test("predict using a test portfolio code") {
+
+    val expectedPCode = "Test_Portfolio_1"
+    val expectedAtDate = LocalDate.of(2016, 5, 1)
+    instance.predict(expectedPCode, expectedAtDate)
+  }
+
   //
   //
   //
   private def generateContextFileContentValues = {
 
     hDayValue = "\"10\""
-
+    mcsNumIterations = "\"10000\""
   }
 
   private def generateContextFileContents: String = {
 
     val hDayVolatilityTransformerConfig = s"hDayVolatility{hDayValue = ${hDayValue}}"
-    s"${hadoopAppContextEntry}, ${hDayVolatilityTransformerConfig}" // Prepend the Hadoop dependencies
+    val mcsConfig = s"mcs{mcsNumIterations = ${mcsNumIterations}}"
+    s"${hadoopAppContextEntry}, ${mcsConfig}, ${hDayVolatilityTransformerConfig}" // Prepend the Hadoop dependencies
 
   }
 
   private def generateDefaultInstance = {
 
-    instance = new HDayMCSValuePredictor
+    instance = new HDayMCSValuePredictor(new PortfolioValuesSourceFromFile())
   }
 
   private def generateAppContext {
