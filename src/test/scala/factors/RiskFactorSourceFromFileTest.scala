@@ -22,9 +22,9 @@ class RiskFactorSourceFromFileTest extends SparkTestBase {
 
   var instance: RiskFactorSourceFromFile = _
 
-  var fileLocation:String = _
-  var factorsFileName:String = _
-  
+  var fileLocation: String = _
+  var factorsFileName: String = _
+
   // Some of the test conditions are linked to the test file contents
   val testFileLength = 31L
 
@@ -158,15 +158,13 @@ class RiskFactorSourceFromFileTest extends SparkTestBase {
     assert(result.count() == expectedNumRows)
   }
 
-
   //
   // Helper methods
   //
   private def generateContextFileContentValues = {
 
-
-   fileLocation = "\"/project/test/initial-testing/\""
-   factorsFileName = "\"factors.clean.may2016.csv\""
+    fileLocation = "\"/project/test/initial-testing/\""
+    factorsFileName = "\"factors.clean.may2016.csv\""
 
   }
 
@@ -179,7 +177,7 @@ class RiskFactorSourceFromFileTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = RiskFactorSourceFromFile(sc)
+    instance = RiskFactorSourceFromFile()
     instance.add(new ValueDateTransformer())
   }
 
@@ -195,6 +193,7 @@ class RiskFactorSourceFromFileTest extends SparkTestBase {
 
   private def resetTestEnvironment = {
 
+    ApplicationContext.sc(sc)
     generateContextFileContents
     generateAppContext
     generateDefaultInstance

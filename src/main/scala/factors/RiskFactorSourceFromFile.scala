@@ -19,9 +19,11 @@ import main.scala.transform.Transformable
 /**
  * Provide risk factor matrix as a DataFrame from from csv file
  */
-case class RiskFactorSourceFromFile(sc: SparkContext) extends RiskFactorSource[DataFrame] with Transformable {
+case class RiskFactorSourceFromFile() extends RiskFactorSource[DataFrame] with Transformable {
 
   val appContext = ApplicationContext.getContext
+  
+  val sc = ApplicationContext.sc
 
   // Locate data
   val hdfsLocation = appContext.getString("fs.default.name")

@@ -120,7 +120,7 @@ class CholeskyCorrelatedSampleGeneratorTest extends SparkTestBase { self: Suite 
   test("test sampling from the risk factors source from 01Jun15 to 31May16") {
 
     val colNameToDrop = "valueDate" // Used as a key in joins to instrument prices
-    val factors = RiskFactorSourceFromFile(sc)
+    val factors = RiskFactorSourceFromFile()
     val f = factors.factors(LocalDate.of(2015, 6, 1), LocalDate.of(2016, 5, 31)).drop(colNameToDrop)
 
     val fAsMatrix = dfToArrayMatrix(f)
@@ -148,7 +148,7 @@ class CholeskyCorrelatedSampleGeneratorTest extends SparkTestBase { self: Suite 
     val startTime = System.currentTimeMillis()
     val result = instance.sampleCorrelated(numRowsToCreate, dfToArrayMatrix(f))
     val endTime = System.currentTimeMillis()
-    
+
     System.out.println(s"${numRowsToCreate} rows took ${endTime - startTime}(ms)")
 
     assert(result.length == numRowsToCreate)
@@ -204,6 +204,7 @@ class CholeskyCorrelatedSampleGeneratorTest extends SparkTestBase { self: Suite 
 
   private def resetTestEnvironment = {
 
+    ApplicationContext.sc(sc)
     generateContextFileContents
     generateAppContext
     generateDefaultInstance

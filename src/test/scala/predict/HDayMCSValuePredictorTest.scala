@@ -4,6 +4,8 @@ import main.scala.application.ApplicationContext
 import main.scala.predict.HDayMCSValuePredictor
 import test.scala.application.SparkTestBase
 import java.time.LocalDate
+import main.scala.factors.RiskFactorSourceFromFile
+import main.scala.portfolios.PortfolioValuesSourceFromFile
 
 class HDayMCSValuePredictorTest extends SparkTestBase {
 
@@ -11,7 +13,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
 
   private var hDayValue: String = _
   private var mcsNumIterations: String = _
-  
+
   override def beforeAll(): Unit = {
 
     super.beforeAll()
@@ -86,7 +88,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
 
   private def generateDefaultInstance = {
 
-    instance = new HDayMCSValuePredictor(new PortfolioValuesSourceFromFile())
+    instance = new HDayMCSValuePredictor(new PortfolioValuesSourceFromFile(), new RiskFactorSourceFromFile())
   }
 
   private def generateAppContext {
