@@ -44,10 +44,11 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     holdings.show()
 
     // TODO: implement the portfolio holdings as an array rather than a DataFrame
-    val holdingsAsArray = holdings.select(instrumentColumn, valueColumn).collect().map { x => (x.getString(0), x.getDouble(1)) }
+    val holdingsAsArray = holdings.select(instrumentColumn, valueColumn).collect().map { x => (x.getString(0), x.getInt(1)) }
 
     // If no model exists for any of the instruments then throw an exception
-    val missingModels = m.getAvailableModels.diff(holdingsAsArray.map(t => t._1))
+    val availableModels = m.getAvailableModels
+    val missingModels = holdingsAsArray.map(t => t._1).filter { dsCode => !availableModels.contains(dsCode) }
     if (missingModels.length > 0) {
       throw new IllegalStateException(s"No model for instruments: ${missingModels.mkString(", ")}")
     }
