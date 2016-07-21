@@ -19,6 +19,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
   var instance: HDayMCSValuePredictor = _
 
   private var hDayValue: String = _
+  private var mcsNumIterationsInt:Int = _
   private var mcsNumIterations: String = _
 
   private var modelsLocation: String = _
@@ -86,7 +87,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
     val expectedPCode = "Test_Portfolio_1"
     val expectedAtDate = LocalDate.of(2016, 6, 1)
     val result = instance.predict(expectedPCode, expectedAtDate)
-//    result.foreach(t => println(s"${t._2.mkString(", ")}"))
+    assert(result.length == mcsNumIterationsInt)
   }
 
   //
@@ -95,7 +96,8 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
   private def generateContextFileContentValues = {
 
     hDayValue = "\"10\""
-    mcsNumIterations = "\"5\""
+    mcsNumIterationsInt = 10000
+    mcsNumIterations = "\"" + mcsNumIterationsInt + "\""
 
     modelsLocation = "\"/project/test/initial-testing/h-models/models/\""
     modelSchemasLocation = "\"/project/test/initial-testing/h-models/schemas/\""

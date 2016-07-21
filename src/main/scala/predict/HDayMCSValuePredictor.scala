@@ -99,6 +99,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
       // Accumulate the results by index for safety
       accumulatedResults = predictions.map { p => p(1) -> addResultToMap(accumulatedResults, p, dsCode, holding) }(scala.collection.breakOut)
+      accumulatedResults = predictions.map { p => p(1) -> addResultToMap(accumulatedResults, p, dsCode, holding) }(scala.collection.breakOut)
     }
 
     accumulatedResults.values.map(r => (r.foldLeft(0D) { (acc, t) => acc + t._2 * t._3 }, r.map(a => (a._1, a._2)))).toArray
