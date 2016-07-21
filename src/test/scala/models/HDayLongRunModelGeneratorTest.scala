@@ -59,15 +59,13 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
     assert(result(expectedDSCode)._1)
   }
 
-
-
   //
   // 
   //
   private def generateContextFileContentValues = {
 
     hdfsLocation = "\"hdfs://localhost:54310\""
-    fileLocation = "\"/project/test/initial-testing/h-prices/\""
+    fileLocation = "\"/project/test/initial-testing/\""
     priceFileType = "\".csv\""
     keyColumn = "\"valueDate\""
     valueColumn = "\"closePrice\""
@@ -75,8 +73,8 @@ class HDayLongRunModelGeneratorTest extends SparkTestBase {
     modelsLocation = "\"/project/test/initial-testing/h-models/models/\""
     modelSchemasLocation = "\"/project/test/initial-testing/h-models/schemas/\""
 
-    factorsFileLocation = "\"/project/test/initial-testing/h-factors/\""
-    factorsFileName = "\"FACTORS_10-DAY.csv\""
+    factorsFileLocation = "\"/project/test/initial-testing/\""
+    factorsFileName = "\"factors.clean.csv\""
 
     hDayValue = "\"10\""
   }

@@ -18,6 +18,7 @@ import org.apache.spark.ml.evaluation.RegressionEvaluator
 import main.scala.transform.Transformable
 import org.apache.spark.ml.Transformer
 import java.time.LocalDate
+import org.apache.spark.mllib.evaluation.RegressionMetrics
 
 /**
  * For want of a better name, the default model generator for data sets
@@ -46,7 +47,7 @@ class DefaultInstrumentModelGenerator() extends InstrumentModelGenerator
   private val noPricesMsg = "No price data found"
 
   private val appContext = ApplicationContext.getContext
-  
+
   val sc = ApplicationContext.sc
 
   /**
@@ -200,6 +201,8 @@ class DefaultInstrumentModelGenerator() extends InstrumentModelGenerator
       val regressionDF = trainDF.withColumnRenamed(getlabelColumn, "label")
       // fit the data
       val model = e.fit(regressionDF)
+      // TEMP TEMP 
+      generateMetadata(dsCode, regressionDF, model.asInstanceOf[Model[_]])
       // persist the model
       persistTheModel(dsCode, model)
     } catch {
@@ -243,6 +246,16 @@ class DefaultInstrumentModelGenerator() extends InstrumentModelGenerator
       case allExceptions: Throwable => return (false, s"Failed to persist the model: ${allExceptions.getMessage}")
     }
     (true, "Model created")
+  }
+
+  private def generateMetadata(dsCode: String, df: DataFrame, model: Model[_]) {
+
+    val result = model.transform(df).select("label", "prediction")
+    val predictionAndObservations = result.map { row =>
+      (row.get(0).asInstanceOf[Double], row.get(1).asInstanceOf[Double])
+    }
+    val metrics = new RegressionMetrics(predictionAndObservations)
+    println(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
   }
 
   //
