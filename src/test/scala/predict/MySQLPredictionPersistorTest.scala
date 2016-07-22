@@ -57,17 +57,16 @@ class MySQLPredictionPersistorTest extends SparkTestBase {
   //
   private def generateContextFileContentValues = {
 
-    dbUrl = "jdbc:mysql://localhost:3306/pData"
-    dbDriver = "com.mysql.jdbc.Driver"
-    dbUser = "root"
-    dbPassword = "nbuser"
+    dbUrl = "\"jdbc:mysql://localhost:3306/pData\""
+    dbDriver = "\"com.mysql.jdbc.Driver\""
+    dbUser = "\"root\""
+    dbPassword = "\"nbuser\""
 
   }
 
   private def generateContextFileContents: String = {
 
     val predictionsConfig = s"predictions{logDBUrl = ${dbUrl}, logDBDriver = ${dbDriver}, dbUser = ${dbUser}, dbPassword = ${dbPassword}}"
-
     s"${hadoopAppContextEntry}, ${predictionsConfig}"
   }
 
@@ -88,7 +87,7 @@ class MySQLPredictionPersistorTest extends SparkTestBase {
 
   private def resetTestEnvironment = {
 
-    generateContextFileContents
+    generateContextFileContentValues
     generateAppContext
     generateDefaultInstance
   }

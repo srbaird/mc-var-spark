@@ -19,8 +19,8 @@ class MySQLPredictionPersistor extends PredictionPersistor {
   //
   lazy val dbUrl = appContext.getString("predictions.logDBUrl")
   lazy val dbDriver = appContext.getString("predictions.logDBDriver")
-  lazy val dbUser = appContext.getString("predictions.user")
-  lazy val dbPassword = appContext.getString("predictions.password")
+  lazy val dbUser = appContext.getString("predictions.dbUser")
+  lazy val dbPassword = appContext.getString("predictions.dbPassword")
 
   // The query interface for the Predictions table
   val predictions: TableQuery[Predictions] = TableQuery[Predictions]
