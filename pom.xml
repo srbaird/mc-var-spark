@@ -58,9 +58,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.slick</groupId>
-			<artifactId>slick_2.11</artifactId>
-			<version>3.1.1</version>
-			<type>bundle</type>
+			<artifactId>slick_2.10</artifactId>
+			<version>2.1.0</version>
 		</dependency>
 	</dependencies>
 </project>
