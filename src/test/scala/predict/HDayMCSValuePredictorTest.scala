@@ -19,7 +19,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
   var instance: HDayMCSValuePredictor = _
 
   private var hDayValue: String = _
-  private var mcsNumIterationsInt:Int = _
+  private var mcsNumIterationsInt: Int = _
   private var mcsNumIterations: String = _
 
   private var modelsLocation: String = _
@@ -30,6 +30,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
   private var keyColumn: String = _
   private var valueColumn: String = _
   private var instrumentColumn: String = _
+  private var predictionColumn: String = _
 
   private var factorsFileLocation: String = _
   private var factorsFileName: String = _
@@ -107,6 +108,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
     keyColumn = "\"valueDate\""
     valueColumn = "\"value\""
     instrumentColumn = "\"dsCode\""
+    predictionColumn = "\"prediction\""
 
     factorsFileLocation = "\"/project/test/initial-testing//\""
     factorsFileName = "\"factors.clean.csv\""
@@ -117,7 +119,8 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
 
     val hDayVolatilityTransformerConfig = s"hDayVolatility{hDayValue = ${hDayValue}}"
     val mcsConfig = s"mcs{mcsNumIterations = ${mcsNumIterations}}"
-    val modelConfig = s"instrumentModel{ modelsLocation = ${modelsLocation} , modelSchemasLocation = ${modelSchemasLocation}}"
+    val modelConfig = s"""instrumentModel{ modelsLocation = ${modelsLocation} , modelSchemasLocation = ${modelSchemasLocation}
+                       , predictionColumn = ${predictionColumn}}"""
     val portfolioConfig = s"""portfolioHolding{fileLocation = ${portfolioFileLocation}
                       , portfolioFileType = ${portfolioFileType} , keyColumn = ${keyColumn}
                       , valueColumn = ${valueColumn}, instrumentColumn = ${instrumentColumn}}"""

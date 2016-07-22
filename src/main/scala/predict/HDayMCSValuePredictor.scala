@@ -28,10 +28,13 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
   lazy val mcsNumIterations = appContext.getLong("mcs.mcsNumIterations")
   lazy val instrumentColumn = appContext.getString("portfolioHolding.instrumentColumn")
   lazy val valueColumn = appContext.getString("portfolioHolding.valueColumn")
+  lazy val predictionColumn = appContext.getString("instrumentModel.predictionColumn")
 
   private val indexColumn = "Index"
-  lazy val predictionColumn = "prediction" // TODO: add to context file
 
+  /**
+   * 
+   */
   override def predict(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
 
     if (pCode == null || pCode.isEmpty()) {
@@ -70,17 +73,16 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
         f.factors(at.minusYears(1))))
 
     val correlationFactorsAsMatrix = dfToArrayMatrix(correlationFactors)
-    // 
+    
     val correlatedSamples = c.sampleCorrelated(mcsNumIterations, correlationFactorsAsMatrix)
 
-    // Add an index to ensure that the results are matched
+    // Add an index to ensure that the results can be correctly accumulated
     val correlatedSamplesWithIndex = correlatedSamples.zipWithIndex.map(s => s._1 :+ toDouble(s._2))
     val correlatedSamplesWithIndexSchema = new StructType(correlationFactors.schema.toArray :+ StructField(indexColumn, DataTypes.DoubleType))
 
     val sqlc = new SQLContext(sc)
-    //    val correlatedSamplesAsRDDOfRows = sc.parallelize(correlatedSamples.map { a => Row.fromSeq(a) })
+
     val correlatedSamplesAsRDDOfRows = sc.parallelize(correlatedSamplesWithIndex.map { a => Row.fromSeq(a) })
-    //    val correlatedSamplesAsDF = sqlc.createDataFrame(correlatedSamplesAsRDDOfRows, correlationFactors.schema)
     val correlatedSamplesAsDF = sqlc.createDataFrame(correlatedSamplesAsRDDOfRows, correlatedSamplesWithIndexSchema)
 
     // Map to co-ordinate the results
@@ -88,7 +90,6 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
     // For each instrument get the appropriate model and predict against the feature samples
     // Use a for loop initially to restrict the parallelism to the samples dimension
-
     for (portfolioHolding <- holdingsAsArray) {
 
       val dsCode = portfolioHolding._1  // to simplify 
@@ -97,11 +98,10 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
       // Apply the model to the generated samples
       val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(correlatedSamplesAsDF).select(predictionColumn, indexColumn))
 
-      // Accumulate the results by index for safety
-      accumulatedResults = predictions.map { p => p(1) -> addResultToMap(accumulatedResults, p, dsCode, holding) }(scala.collection.breakOut)
+      // Accumulate the results by index
       accumulatedResults = predictions.map { p => p(1) -> addResultToMap(accumulatedResults, p, dsCode, holding) }(scala.collection.breakOut)
     }
-
+    // Filter the accumulated results 
     accumulatedResults.values.map(r => (r.foldLeft(0D) { (acc, t) => acc + t._2 * t._3 }, r.map(a => (a._1, a._2)))).toArray
   }
 
