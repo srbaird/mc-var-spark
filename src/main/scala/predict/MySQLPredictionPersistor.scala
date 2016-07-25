@@ -26,9 +26,22 @@ class MySQLPredictionPersistor extends PredictionPersistor {
   val predictions: TableQuery[Predictions] = TableQuery[Predictions]
 
   /**
-   * 
+   *
    */
-  def persist(portfolioCode: String, at: LocalDate, eClass:String, hValue: Double, pValue: Double, valuation: Double) = {
+  def persist(portfolioCode: String, at: LocalDate, eClass: String, hValue: Double, pValue: Double, valuation: Double) = {
+
+    if (portfolioCode == null || portfolioCode.isEmpty()) {
+      throw new IllegalArgumentException("An invalid portfolio code was supplied: ${portfolioCode}")
+    }
+
+    if (at == null) {
+      throw new IllegalArgumentException("An invalid valuation date was supplied: ${at}")
+    }
+
+    if (eClass == null || eClass.isEmpty()) {
+      throw new IllegalArgumentException("An invalid estimator class was supplied: ${eClass}")
+    }
+
 
     Database.forURL(dbUrl, driver = dbDriver, user = dbUser, password = dbPassword) withSession { implicit session =>
 
