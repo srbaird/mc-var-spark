@@ -28,13 +28,13 @@ class MySQLPredictionPersistor extends PredictionPersistor {
   /**
    * 
    */
-  def persist(portfolioCode: String, at: LocalDate, hValue: Double, pValue: Double, valuation: Double) = {
+  def persist(portfolioCode: String, at: LocalDate, eClass:String, hValue: Double, pValue: Double, valuation: Double) = {
 
     Database.forURL(dbUrl, driver = dbDriver, user = dbUser, password = dbPassword) withSession { implicit session =>
 
       val d = at.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-      predictions += (portfolioCode, new Date(d), hValue, pValue, valuation)
+      predictions += (portfolioCode, new Date(d), eClass, hValue, pValue, valuation)
     }
   }
 

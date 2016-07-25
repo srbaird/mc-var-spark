@@ -7,6 +7,6 @@ trait PredictionPersistor {
   /**
    * 
    */
-  def persist(portfolioCode:String, at:LocalDate, hValue:Double, pValue:Double, valuation:Double)
+  def persist(portfolioCode:String, at:LocalDate, eClass:String,hValue:Double, pValue:Double, valuation:Double)
   
 }

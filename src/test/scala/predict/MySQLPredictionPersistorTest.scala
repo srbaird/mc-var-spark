@@ -47,10 +47,11 @@ class MySQLPredictionPersistorTest extends SparkTestBase {
 
     val expectedPortfolioCode = "portfolio code"
     val expectedAtDate = LocalDate.now()
+    val expectedEstimatorClass = "Test only"
     val expectedHValue = 10
     val expectedPValue = 95
     val expectedValuation = System.currentTimeMillis()
-    instance.persist(expectedPortfolioCode, expectedAtDate, expectedHValue, expectedPValue, expectedValuation)
+    instance.persist(expectedPortfolioCode, expectedAtDate, expectedEstimatorClass, expectedHValue, expectedPValue, expectedValuation)
   }
   //
   //
