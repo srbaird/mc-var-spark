@@ -41,7 +41,6 @@ class MySQLPredictionPersistorTest extends SparkTestBase {
   override def beforeEach() {
 
     resetTestEnvironment
-
   }
 
   // Prevent the Spark Context being recycled
@@ -66,6 +65,7 @@ class MySQLPredictionPersistorTest extends SparkTestBase {
       instance.persist("", expectedAtDate, expectedEstimatorClass, expectedHValue, expectedPValue, expectedValuation)
     }
   }
+  
   /**
    * Writing a row with a null at-date should result in an exception
    */
@@ -118,7 +118,6 @@ class MySQLPredictionPersistorTest extends SparkTestBase {
     dbDriver = "\"com.mysql.jdbc.Driver\""
     dbUser = "\"root\""
     dbPassword = "\"nbuser\""
-
   }
 
   private def generateContextFileContents: String = {

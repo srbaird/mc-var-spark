@@ -85,6 +85,7 @@ class HDayMCSValuePredictorTest extends SparkTestBase {
    */
   test("predict using a test portfolio code") {
 
+    println(generateContextFileContents)
     val expectedPCode = "Test_Portfolio_1"
     val expectedAtDate = LocalDate.of(2016, 6, 1)
     val result = instance.predict(expectedPCode, expectedAtDate)

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	   					   http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="applicationContextFileName" class="java.lang.String"
+		factory-method="valueOf">
+		<constructor-arg value="resources/test/applicationContext" />
+	</bean>
+	
+	
+
+
+	<!-- Transformers -->
+	<bean id="defaultDoublesOnlyTransformer" class="main.scala.transform.DoublesOnlyTransformer" />
+	<bean id="defaultValueDateTransformer" class="main.scala.transform.ValueDateTransformer" />
+	<bean id="defaultHDayVolatilityTransformer" class="main.scala.transform.HDayVolatilityTransformer" />
+
+</beans>
