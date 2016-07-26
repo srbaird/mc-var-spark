@@ -18,10 +18,13 @@ import org.apache.spark.sql.types.DataTypes
 import main.scala.application.ApplicationContext
 import main.scala.transform.Transformable
 
-class PortfolioValuesSourceFromFile extends PortfolioValuesSource[DataFrame] with Transformable {
+class PortfolioValuesSourceFromFile(val t: Seq[Transformer]) extends PortfolioValuesSource[DataFrame] with Transformable {
+
+  // Ensure a non-null sequence of transformers 
+  def this() = this(Array[Transformer]())
 
   val appContext = ApplicationContext.getContext
-  
+
   val sc = ApplicationContext.sc
   //
   // Context variables to locate the data
@@ -86,13 +89,13 @@ class PortfolioValuesSourceFromFile extends PortfolioValuesSource[DataFrame] wit
     val atDate = java.sql.Date.valueOf(at)
     // Create a temp table (!) containing a single row for each instrument
     // Uses the maximum value date that is less than or equal to the at-date
-    
-    val dfJoin = df.filter((df(keyColumn).cast(DataTypes.DateType)).leq(atDate))      // remove future dates
-      .groupBy(instrumentColumn)                           // for each instrument...
-      .agg(max(df.col(keyColumn)))                         // ... get the maximum date
-      .withColumnRenamed(s"max(${keyColumn})", keyColumn)  // rename the columns back to their original values 
-      
-    transform(df.join(dfJoin, dfJoin.columns))             // Join the dataset to the temp table 
+
+    val dfJoin = df.filter((df(keyColumn).cast(DataTypes.DateType)).leq(atDate)) // remove future dates
+      .groupBy(instrumentColumn) // for each instrument...
+      .agg(max(df.col(keyColumn))) // ... get the maximum date
+      .withColumnRenamed(s"max(${keyColumn})", keyColumn) // rename the columns back to their original values 
+
+    transform(df.join(dfJoin, dfJoin.columns)) // Join the dataset to the temp table 
   }
 
   /**
@@ -112,10 +115,10 @@ class PortfolioValuesSourceFromFile extends PortfolioValuesSource[DataFrame] wit
    */
   override def transform(d: DataFrame): DataFrame = {
 
-    if (transformers.isEmpty) {
+    if (t.isEmpty) {
       d
     } else {
-      transformers.foldLeft(d)((acc, t) => t.transform(acc))
+      t.foldLeft(d)((acc, t) => t.transform(acc))
     }
   }
 }

@@ -27,7 +27,19 @@
 
 	<!-- Instrument Price Source From File: Requires a sequence of transformers 
 		as a constructor -->
-	<bean id="defaultInstrumentPriceSourceFromFile" class="main.scala.prices.InstrumentPriceSourceFromFile" lazy-init="true">
+	<bean id="defaultInstrumentPriceSourceFromFile" class="main.scala.prices.InstrumentPriceSourceFromFile"
+		lazy-init="true">
+		<constructor-arg>
+			<list>
+				<ref bean="defaultValueDateTransformer" />
+			</list>
+		</constructor-arg>
+	</bean>
+
+	<!-- Portfolio Values Source From File: Requires a sequence of transformers 
+		as a constructor -->
+	<bean id="defaultPortfolioValuesSourceFromFile" class="main.scala.portfolios.PortfolioValuesSourceFromFile"
+		lazy-init="true">
 		<constructor-arg>
 			<list>
 				<ref bean="defaultValueDateTransformer" />
