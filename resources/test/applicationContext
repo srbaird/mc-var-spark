@@ -49,3 +49,9 @@ dfs 	{
 		keyColumn = "valueDate", 
 		valueColumn = "closePrice"
 		}
+, predictions	{
+		logDBUrl = "jdbc:mysql://localhost:3306/pData", 
+		logDBDriver = "com.mysql.jdbc.Driver", 
+		dbUser = "root", 
+		dbPassword = "nbuser"
+		}

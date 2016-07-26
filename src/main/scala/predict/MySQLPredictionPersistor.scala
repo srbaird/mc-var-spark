@@ -11,9 +11,9 @@ import scala.slick.driver.MySQLDriver.simple._
 
 class MySQLPredictionPersistor extends PredictionPersistor {
 
-  val appContext = ApplicationContext.getContext
+  lazy val appContext = ApplicationContext.getContext
 
-  val sc = ApplicationContext.sc
+  lazy val sc = ApplicationContext.sc
   //
   // Context variables to connect to the database
   //
