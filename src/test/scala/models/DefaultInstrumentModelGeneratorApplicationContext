@@ -21,24 +21,12 @@ dfs 	{
  						name = "hdfs://localhost:54310"
  					}
  		}
- , mcs {
- 		mcsNumIterations = "10000"
- 		}
- , hDayVolatility {
- 		hDayValue = "10"
- 		}  
  , instrumentModel { 
- 		modelsLocation = "/project/test/initial-testing/h-models/models/", 
- 		modelSchemasLocation = "/project/test/initial-testing/h-models/schemas/" , 
+ 		modelsLocation = "/project/test/initial-testing/model/models_/", 
+ 		modelSchemasLocation = "/project/test/initial-testing/model/schemas_/" , 
  		predictionColumn = "prediction"
  		} 
- , portfolioHolding {
- 		fileLocation = "/project/test/initial-testing/portfolios/", 
- 		portfolioFileType = ".csv" , 
- 		keyColumn = "valueDate", 
- 		valueColumn = "value", 
- 		instrumentColumn = "dsCode"
- 		} 
+
  , riskFactor {
  		fileLocation = "/project/test/initial-testing/", 
  		factorsFileName = "factors.clean.csv" 

@@ -1,51 +1,39 @@
 package test.scala.factors
 
-import java.io.File
-import java.io.PrintWriter
-import java.time.LocalDate
-import org.apache.spark.LocalSparkContext
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.annotation.Experimental
-import org.scalatest.Finders
-import org.scalatest.FunSuite
-import org.scalatest.Suite
-import main.scala.application.ApplicationContext
 import main.scala.factors.RiskFactorSourceFromFile
-import main.scala.transform.ValueDateTransformer
-import test.scala.application.SparkTestBase
+import test.scala.application.DITestBase
+import java.time.LocalDate
+import main.scala.application.ApplicationContext
+import java.io.File
 
-/**
- * Test the file-backed RiskFactorSource -> DataFrame. The tests are predicated on a file containing a months worth of data
- */
-class RiskFactorSourceFromFileTest extends SparkTestBase {
+class RiskFactorSourceFromFileWithDITest extends DITestBase {
+
+  val instanceBeanName = "defaultRiskFactorSourceFromFile"
 
   var instance: RiskFactorSourceFromFile = _
 
-  var fileLocation: String = _
-  var factorsFileName: String = _
+  val localApplicationContextFileName = "src/test/scala/factors/RiskFactorSourceFromFIleApplicationContext"
 
   // Some of the test conditions are linked to the test file contents
   val testFileLength = 31L
 
-  private var hDayValue: String = _
-
   override def beforeAll(): Unit = {
 
-    super.beforeAll()
-
+    super.beforeAll
   }
 
   override def beforeEach() {
 
-    generateContextFileContentValues
+    generateInstance
 
-    resetTestEnvironment
   }
 
-  // Prevent the Spark Context being recycled
+  // Overridden to prevent Spark Context from being recycled
   override def afterEach() {}
 
+  //
+  //  Start of tests
+  //
   /**
    *
    */
@@ -159,43 +147,13 @@ class RiskFactorSourceFromFileTest extends SparkTestBase {
   }
 
   //
-  // Helper methods
+  //  Helper functions
   //
-  private def generateContextFileContentValues = {
+  private def generateInstance = {
 
-    fileLocation = "\"/project/test/initial-testing/\""
-    factorsFileName = "\"factors.clean.may2016.csv\""
-
+    super.generateApplicationContext
+    ApplicationContext.useConfigFile(new File(localApplicationContextFileName)) // use local version of the application context file
+    instance = ctx.getBean(instanceBeanName).asInstanceOf[RiskFactorSourceFromFile]
   }
 
-  private def generateContextFileContents: String = {
-
-    val factorConfigFileContents = s"riskFactor{fileLocation = ${fileLocation}, factorsFileName = ${factorsFileName} }"
-    s"${hadoopAppContextEntry}, ${factorConfigFileContents}" // Prepend the Hadoop dependencies
-
-  }
-
-  private def generateDefaultInstance = {
-
-    instance = new RiskFactorSourceFromFile() 
-    instance.add(new ValueDateTransformer())
-  }
-
-  private def generateAppContext {
-
-    val configFile = writeTempFile(generateContextFileContents)
-    try {
-      val result = ApplicationContext.useConfigFile(configFile)
-    } finally {
-      configFile.delete()
-    }
-  }
-
-  private def resetTestEnvironment = {
-
-    ApplicationContext.sc(sc)
-    generateContextFileContents
-    generateAppContext
-    generateDefaultInstance
-  }
 }

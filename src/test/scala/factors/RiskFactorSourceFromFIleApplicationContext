@@ -1,0 +1,9 @@
+fs 	{
+ 		default 	{
+ 						name = "hdfs://localhost:54310"
+ 					}
+ 		}
+ , riskFactor {
+ 		fileLocation = "/project/test/initial-testing/", 
+ 		factorsFileName = "factors.clean.may2016.csv" 
+ 		}

@@ -28,9 +28,9 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   val sc = ApplicationContext.sc
 
   // Locate data
-  private val hdfsLocation = appContext.getString("fs.default.name")
-  private val modelsLocation = appContext.getString("instrumentModel.modelsLocation")
-  private val modelSchemasLocation = appContext.getString("instrumentModel.modelSchemasLocation")
+  lazy val hdfsLocation = appContext.getString("fs.default.name")
+  lazy val modelsLocation = appContext.getString("instrumentModel.modelsLocation")
+  lazy val modelSchemasLocation = appContext.getString("instrumentModel.modelSchemasLocation")
   //
   private val metadataClassName = "metadataClassName"
   //
@@ -40,7 +40,9 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
     // Use the Hadoop configuration from the Application Context rather than the Spark default
     val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
-
+    
+    
+//    println(s"Look for models in '${modelsLocation}'")
     val p = new Path(modelsLocation)
 
     val files = fs.listLocatedStatus(p)

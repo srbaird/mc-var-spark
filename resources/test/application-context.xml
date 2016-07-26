@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:scala-util="http://www.springframework.org/schema/scala/util"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:c="http://www.springframework.org/schema/c"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/scala/util http://www.springframework.org/schema/scala/util/scala-util.xsd">
+                        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
 	<!-- From github.com/spring-projects/spring-scala/wiki/Wiring-up-Scala-Collections-in-Spring-XML. 
 		References to 'org.springframework.scala' replaced with 'org.psnively.scala' -->
@@ -47,6 +48,31 @@
 		</constructor-arg>
 	</bean>
 
+	<!-- Instrument Model Source From File -->
+	<bean id="defaultInstrumentModelSourceFromFile" class="main.scala.models.InstrumentModelSourceFromFile"
+		lazy-init="true" />
 
+	<!-- Risk Factor Source From File: Requires a sequence of transformers as 
+		a constructor -->
+	<bean id="defaultRiskFactorSourceFromFile" class="main.scala.factors.RiskFactorSourceFromFile"
+		lazy-init="true">
+		<constructor-arg>
+			<list>
+				<ref bean="defaultValueDateTransformer" />
+			</list>
+		</constructor-arg>
+	</bean>
+
+
+	<!-- Default Instrument Model Generator: Compose from tested elements -->
+	<bean id="defaultDefaultInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
+		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
+		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="defaultDefaultInstrumentModelGeneratorTransformerList"
+		lazy-init="true" />
+		
+	<!-- Allow the Custom editor to handle the conversion -->
+	<util:list id="defaultDefaultInstrumentModelGeneratorTransformerList">
+		<ref bean="defaultValueDateTransformer" />
+	</util:list>
 
 </beans>

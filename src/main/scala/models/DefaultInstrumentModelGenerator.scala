@@ -23,9 +23,10 @@ import org.apache.spark.mllib.evaluation.RegressionMetrics
 /**
  * For want of a better name, the default model generator for data sets
  */
-class DefaultInstrumentModelGenerator() extends InstrumentModelGenerator
+class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], val f: RiskFactorSource[DataFrame], val m: InstrumentModelSource[Model[_]], val t: Seq[Transformer]) extends InstrumentModelGenerator
     with InstrumentModelGeneratorSources[DataFrame, Model[_]] with Transformable {
 
+  def this() = this(null, null, null, Array[Transformer]())
   //
   // For the implementation of Transformable
   //

@@ -19,14 +19,17 @@ import main.scala.transform.Transformable
 /**
  * Provide risk factor matrix as a DataFrame from from csv file
  */
-case class RiskFactorSourceFromFile() extends RiskFactorSource[DataFrame] with Transformable {
+case class RiskFactorSourceFromFile(val t:Array[Transformer]) extends RiskFactorSource[DataFrame] with Transformable {
+    
+  // Ensure a non-null sequence of transformers  
+  def this() = this(Array[Transformer]())
 
   val appContext = ApplicationContext.getContext 
   
   val sc = ApplicationContext.sc
 
   // Locate data
-  val hdfsLocation = appContext.getString("fs.default.name") 
+  lazy val hdfsLocation = appContext.getString("fs.default.name") 
   lazy val fileLocation = appContext.getString("riskFactor.fileLocation")
   lazy val factorsFileName = appContext.getString("riskFactor.factorsFileName")
   //
@@ -106,10 +109,10 @@ case class RiskFactorSourceFromFile() extends RiskFactorSource[DataFrame] with T
 
   override def transform(d: DataFrame): DataFrame = {
 
-    if (transformers.isEmpty) {
+    if (t.isEmpty) {
       d
     } else {
-      transformers.foldLeft(d)((acc, t) => t.transform(acc))
+      t.foldLeft(d)((acc, t) => t.transform(acc))
     }
   }
 }
