@@ -69,20 +69,37 @@
 		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
 		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="emptyInstrumentModelGeneratorTransformerList"
 		lazy-init="true" />
-		
+
 	<!-- Empty list of transformers -->
-	<util:list id="emptyInstrumentModelGeneratorTransformerList"  />
-		
+	<util:list id="emptyInstrumentModelGeneratorTransformerList" />
+
 	<!-- H-Day Instrument Model Generator: Compose from tested elements -->
 	<bean id="hDayInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
 		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
 		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="hDayInstrumentModelGeneratorTransformerList"
 		lazy-init="true" />
-		
-	<!-- Add transformers to generate a matrix of Doubles and perform h-day variance -->
-	<util:list id="hDayInstrumentModelGeneratorTransformerList" scope="prototype">
+
+	<!-- Add transformers to generate a matrix of Doubles and perform h-day 
+		variance -->
+	<util:list id="hDayInstrumentModelGeneratorTransformerList"
+		scope="prototype">
 		<ref bean="defaultDoublesOnlyTransformer" />
 		<ref bean="defaultHDayVolatilityTransformer" />
 	</util:list>
+
+
+	<!-- Cholesky Correlated Sample Generator: requires a RandomDoubleSource 
+		constructor -->
+	<bean id="choleskyCorrelatedSampleGenerator" class="main.scala.predict.CholeskyCorrelatedSampleGenerator"
+		c:r-ref="isaacRandomDoubleSource" lazy-init="true" scope="prototype"/>
+
+	<!-- Random Double Source using ISAAC pseudo-random number generator -->
+	<bean id="isaacRandomDoubleSource" class="main.scala.predict.RandomDoubleSourceFromRandom"
+		c:r-ref="apacheCommonsISAACRandomNumberGeneraor" lazy-init="true" scope="prototype"/>
+
+	<!-- Apache Commons implementation of cryptographic pseudo-random number 
+		generator -->
+	<bean id="apacheCommonsISAACRandomNumberGeneraor" class="org.apache.commons.math3.random.ISAACRandom"
+		lazy-init="true" scope="prototype" />
 
 </beans>

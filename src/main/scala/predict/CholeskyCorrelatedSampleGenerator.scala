@@ -1,10 +1,8 @@
 package main.scala.predict
 
-import org.apache.commons.math3.random.ISAACRandom
-import org.apache.commons.math3.random.RandomAdaptor
+import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.CholeskyDecomposition
 import org.apache.commons.math3.stat.correlation.Covariance
-import org.apache.commons.math3.linear.Array2DRowRealMatrix
 
 class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends CorrelatedSampleGenerator {
 
