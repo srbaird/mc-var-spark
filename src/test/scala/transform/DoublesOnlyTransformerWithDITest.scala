@@ -37,8 +37,8 @@ class DoublesOnlyTransformerWithDITest extends SparkTestBase {
 
   // Prevent the Spark Context being recycled
   override def afterEach() {}
-  
-    /**
+
+  /**
    * Invoking transform on a null DataFrame should result in an exception
    */
   test("transform a null data frame ") {

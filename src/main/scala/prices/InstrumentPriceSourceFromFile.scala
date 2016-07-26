@@ -18,22 +18,24 @@ import org.apache.spark.sql.SQLContext
 /**
  * File backed implementation of InstrumentPriceSource which generates date-price pairs as a DataFrame
  */
-class InstrumentPriceSourceFromFile() extends InstrumentPriceSource[DataFrame] with Transformable {
+class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentPriceSource[DataFrame] with Transformable {
 
-  val appContext = ApplicationContext.getContext 
-  
-  val sc = ApplicationContext.sc 
+  // Ensure a non-null sequence of transformers 
+  def this() = this(Array[Transformer]())
+
+  val appContext = ApplicationContext.getContext
+
+  val sc = ApplicationContext.sc
 
   // Locate data
-  val hdfsLocation = appContext.getString("fs.default.name")
-  val fileLocation = appContext.getString("instrumentPrice.fileLocation")
-  val priceFileType = appContext.getString("instrumentPrice.priceFileType")
+  lazy val hdfsLocation = appContext.getString("fs.default.name")
+  lazy val fileLocation = appContext.getString("instrumentPrice.fileLocation")
+  lazy val priceFileType = appContext.getString("instrumentPrice.priceFileType")
+  lazy val keyColumn = appContext.getString("instrumentPrice.keyColumn")
+  lazy val valueColumn = appContext.getString("instrumentPrice.valueColumn")
   //
   private val logger = Logger.getLogger(RiskFactorSourceFromFile.getClass)
-  //
-  private val keyColumn = appContext.getString("instrumentPrice.keyColumn")
-  private val valueColumn = appContext.getString("instrumentPrice.valueColumn")
-  //
+  // TODO: remove this
   private var transformers = Vector[Transformer]()
   //
   /**
@@ -130,10 +132,10 @@ class InstrumentPriceSourceFromFile() extends InstrumentPriceSource[DataFrame] w
    */
   override def transform(d: DataFrame): DataFrame = {
 
-    if (transformers.isEmpty) {
+    if (t.isEmpty) {
       d
     } else {
-      transformers.foldLeft(d)((acc, t) => t.transform(acc))
+      t.foldLeft(d)((acc, t) => t.transform(acc))
     }
   }
 
