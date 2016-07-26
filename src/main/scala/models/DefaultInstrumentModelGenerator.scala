@@ -132,7 +132,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
     if (t.isEmpty) {
       d
     } else {
-      t.foldLeft(d)((acc, t) => t.transform(acc))
+      t.foldLeft(d)((acc, tr) => tr.transform(acc))
     }
   }
 
@@ -177,7 +177,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
       val trainDF = transform(featureDataFrameForDSCode(dsCode, getPrices, getFactors)) // apply any supplied additional transformations
       return fitModelToTrainingData(dsCode, trainDF)
     } catch {
-      case allExceptions: Throwable => return (false, s"Failed to generate a training dataframe: ${allExceptions.getMessage}")
+      case allExceptions: Throwable => return (false, s"Failed to generate a training dataframe: ${allExceptions.getClass.getSimpleName}")
     }
   }
 
@@ -186,7 +186,6 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   // 
   private def featureDataFrameForDSCode(dsCode: String, p: DataFrame, f: DataFrame): DataFrame = {
 
-    //    prices.getPrices(dsCode).join(factors.factors(), getkeyColumn)
     p.join(f, getkeyColumn)
   }
 

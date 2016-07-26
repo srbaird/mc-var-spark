@@ -16,8 +16,8 @@ import org.apache.spark.sql.SQLContext
 import main.scala.util.Functions._
 
 /**
- * Implementation of the Transformer pattern to reduce a factors data frame to 
- * a data frame of absolute h-day volatility i.e. the difference in value of any data set 
+ * Implementation of the Transformer pattern to reduce a factors data frame to
+ * a data frame of absolute h-day volatility i.e. the difference in value of any data set
  * over a period of h-days
  */
 class HDayVolatilityTransformer(override val uid: String) extends Transformer {
@@ -26,15 +26,14 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
   //
   //
   //
-  private val appContext = ApplicationContext.getContext
+  lazy val appContext = ApplicationContext.getContext
   //
   //
   //
   lazy val hDayValue = appContext.getString("hDayVolatility.hDayValue").toInt
 
-
   /**
-   * Take the DataFrame and return an h-day volatility data frame. The h-value is retrieved from the 
+   * Take the DataFrame and return an h-day volatility data frame. The h-value is retrieved from the
    * application context as 'hDayVolatility.hDayValue'
    */
   override def transform(df: DataFrame): DataFrame = {
@@ -43,9 +42,10 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
       throw new IllegalArgumentException(s"Invalid data frame supplied: ${df}")
     }
     // Number of rows must be greater than zero and exceed the h-day range
-    if (!(hDayValue > 0 ) || !(df.count > hDayValue)) {
+    if (!(hDayValue > 0) || !(df.count > hDayValue)) {
       throw new IllegalArgumentException(s"Insufficient rows (${df.count}) in data frame for h-day value ${hDayValue}")
     }
+
     //
     // Validate the schema
     //

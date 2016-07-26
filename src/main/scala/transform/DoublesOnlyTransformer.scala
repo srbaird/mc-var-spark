@@ -43,7 +43,6 @@ class DoublesOnlyTransformer(override val uid: String) extends Transformer {
     if (schema == null) {
       throw new IllegalArgumentException(s"Invalid schema supplied: ${schema}")
     }
-
     val validDataType = DataTypes.DoubleType
     StructType(schema.filter { _.dataType == validDataType })
   }

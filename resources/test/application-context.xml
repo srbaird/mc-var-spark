@@ -67,12 +67,22 @@
 	<!-- Default Instrument Model Generator: Compose from tested elements -->
 	<bean id="defaultDefaultInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
 		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
-		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="defaultDefaultInstrumentModelGeneratorTransformerList"
+		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="emptyInstrumentModelGeneratorTransformerList"
 		lazy-init="true" />
 		
-	<!-- Allow the Custom editor to handle the conversion -->
-	<util:list id="defaultDefaultInstrumentModelGeneratorTransformerList" scope="prototype">
-		<ref bean="defaultValueDateTransformer" />
+	<!-- Empty list of transformers -->
+	<util:list id="emptyInstrumentModelGeneratorTransformerList"  />
+		
+	<!-- H-Day Instrument Model Generator: Compose from tested elements -->
+	<bean id="hDayInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
+		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
+		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="hDayInstrumentModelGeneratorTransformerList"
+		lazy-init="true" />
+		
+	<!-- Add transformers to generate a matrix of Doubles and perform h-day variance -->
+	<util:list id="hDayInstrumentModelGeneratorTransformerList" scope="prototype">
+		<ref bean="defaultDoublesOnlyTransformer" />
+		<ref bean="defaultHDayVolatilityTransformer" />
 	</util:list>
 
 </beans>
