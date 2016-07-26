@@ -71,7 +71,7 @@
 		lazy-init="true" />
 		
 	<!-- Allow the Custom editor to handle the conversion -->
-	<util:list id="defaultDefaultInstrumentModelGeneratorTransformerList">
+	<util:list id="defaultDefaultInstrumentModelGeneratorTransformerList" scope="prototype">
 		<ref bean="defaultValueDateTransformer" />
 	</util:list>
 

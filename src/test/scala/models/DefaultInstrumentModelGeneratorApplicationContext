@@ -22,8 +22,8 @@ dfs 	{
  					}
  		}
  , instrumentModel { 
- 		modelsLocation = "/project/test/initial-testing/model/models_/", 
- 		modelSchemasLocation = "/project/test/initial-testing/model/schemas_/" , 
+ 		modelsLocation = "/project/test/initial-testing/model/models/", 
+ 		modelSchemasLocation = "/project/test/initial-testing/model/schemas/" , 
  		predictionColumn = "prediction"
  		} 
 

@@ -71,7 +71,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
   override def hasSources: Boolean = {
 
-    (factors != null && prices != null && models != null)
+    (f != null && p != null && m != null)
   }
 
   override def buildModel(from: LocalDate, to: LocalDate, dsCodes: Seq[String]): Map[String, (Boolean, String)] = {
@@ -94,12 +94,12 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
     }
 
     // Load the risk factor data.  If not data reject all dsCodes
-    val factorsDF = factors.factors()
+    val factorsDF = f.factors()
     if (factorsDF.count == 0) {
       return dsCodes.foldLeft(Map[String, (Boolean, String)]()) { (map, dsCode) => map + (dsCode -> (false, noFactorsMsg)) }
     }
 
-    val availablePrices = prices.getAvailableCodes()
+    val availablePrices = p.getAvailableCodes()
     // Reject dsCodes where no price data exists
     val missingPrices = dsCodes
       .filter { d => !availablePrices.contains(d) }
@@ -129,10 +129,10 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
    */
   override def transform(d: DataFrame): DataFrame = {
 
-    if (transformers.isEmpty) {
+    if (t.isEmpty) {
       d
     } else {
-      transformers.foldLeft(d)((acc, t) => t.transform(acc))
+      t.foldLeft(d)((acc, t) => t.transform(acc))
     }
   }
 
@@ -146,14 +146,14 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
       if (to == null && from == null) {
 
-        prices.getPrices(dsCode)
+        p.getPrices(dsCode)
 
       } else if (to == null) {
-        prices.getPrices(dsCode, from)
+        p.getPrices(dsCode, from)
 
       } else {
 
-        prices.getPrices(dsCode, from, to)
+        p.getPrices(dsCode, from, to)
       }
     }
 
@@ -161,15 +161,15 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
       if (to == null && from == null) {
 
-        factors.factors
+        f.factors
 
       } else if (to == null) {
 
-        factors.factors(from)
+        f.factors(from)
 
       } else {
 
-        factors.factors(from, to)
+        f.factors(from, to)
       }
     }
 
@@ -242,7 +242,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   private def persistTheModel(dsCode: String, model: Any): (Boolean, String) = {
 
     try {
-      models.putModel(dsCode, model.asInstanceOf[Model[_]])
+      m.putModel(dsCode, model.asInstanceOf[Model[_]])
     } catch {
       case allExceptions: Throwable => return (false, s"Failed to persist the model: ${allExceptions.getMessage}")
     }
