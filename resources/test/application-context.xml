@@ -107,4 +107,9 @@
 	<bean id="mySQLPredictionPersistor" class="main.scala.predict.MySQLPredictionPersistor"
 		lazy-init="true" scope="prototype" />
 
+	<!-- H-Day MCS Value Predictor: -->
+	<bean id="hDayMCSValuePredictor" class="main.scala.predict.HDayMCSValuePredictor"
+		c:p-ref="defaultPortfolioValuesSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
+		c:c-ref="choleskyCorrelatedSampleGenerator" c:m-ref="defaultInstrumentModelSourceFromFile"
+		lazy-init="true" />
 </beans>
