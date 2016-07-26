@@ -19,7 +19,6 @@
 		<constructor-arg value="resources/test/applicationContext" />
 	</bean>
 
-
 	<!-- Transformers -->
 	<bean id="defaultDoublesOnlyTransformer" class="main.scala.transform.DoublesOnlyTransformer" />
 	<bean id="defaultValueDateTransformer" class="main.scala.transform.ValueDateTransformer" />
