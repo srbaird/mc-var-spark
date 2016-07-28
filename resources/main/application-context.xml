@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+	<!-- From github.com/spring-projects/spring-scala/wiki/Wiring-up-Scala-Collections-in-Spring-XML. 
+		References to 'org.springframework.scala' replaced with 'org.psnively.scala' -->
+	<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+		<property name="propertyEditorRegistrars">
+			<bean class="org.psnively.scala.beans.propertyeditors.ScalaEditorRegistrar" />
+		</property>
+	</bean>
+
+	<!-- String containing the name of the application context file -->
+	<bean id="applicationContextFileName" class="java.lang.String"
+		factory-method="valueOf">
+		<constructor-arg value="resources/main/applicationContext" />
+	</bean>
+
+	<!-- Transformers -->
+	<bean id="defaultDoublesOnlyTransformer" class="main.scala.transform.DoublesOnlyTransformer" />
+	<bean id="defaultValueDateTransformer" class="main.scala.transform.ValueDateTransformer" />
+	<bean id="defaultHDayVolatilityTransformer" class="main.scala.transform.HDayVolatilityTransformer" />
+
+
+	<!-- Instrument Price Source From File: Requires a sequence of transformers 
+		as a constructor -->
+	<bean id="defaultInstrumentPriceSourceFromFile" class="main.scala.prices.InstrumentPriceSourceFromFile"
+		lazy-init="true">
+		<constructor-arg>
+			<list>
+				<ref bean="defaultValueDateTransformer" />
+			</list>
+		</constructor-arg>
+	</bean>
+
+	<!-- Portfolio Values Source From File: Requires a sequence of transformers 
+		as a constructor -->
+	<bean id="defaultPortfolioValuesSourceFromFile" class="main.scala.portfolios.PortfolioValuesSourceFromFile"
+		lazy-init="true">
+		<constructor-arg>
+			<list>
+				<ref bean="defaultValueDateTransformer" />
+			</list>
+		</constructor-arg>
+	</bean>
+
+	<!-- Instrument Model Source From File -->
+	<bean id="defaultInstrumentModelSourceFromFile" class="main.scala.models.InstrumentModelSourceFromFile"
+		lazy-init="true" />
+
+	<!-- Risk Factor Source From File: Requires a sequence of transformers as 
+		a constructor -->
+	<bean id="defaultRiskFactorSourceFromFile" class="main.scala.factors.RiskFactorSourceFromFile"
+		lazy-init="true">
+		<constructor-arg>
+			<list>
+				<ref bean="defaultValueDateTransformer" />
+			</list>
+		</constructor-arg>
+	</bean>
+
+
+	<!-- Default Instrument Model Generator: Compose from tested elements -->
+	<bean id="defaultDefaultInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
+		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
+		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="emptyInstrumentModelGeneratorTransformerList"
+		lazy-init="true" />
+
+	<!-- Empty list of transformers -->
+	<util:list id="emptyInstrumentModelGeneratorTransformerList" />
+
+	<!-- H-Day Instrument Model Generator: Compose from tested elements -->
+	<bean id="hDayInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
+		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
+		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="hDayInstrumentModelGeneratorTransformerList"
+		lazy-init="true" />
+
+	<!-- Add transformers to generate a matrix of Doubles and perform h-day 
+		variance -->
+	<util:list id="hDayInstrumentModelGeneratorTransformerList"
+		scope="prototype">
+		<ref bean="defaultDoublesOnlyTransformer" />
+		<ref bean="defaultHDayVolatilityTransformer" />
+	</util:list>
+
+
+	<!-- Cholesky Correlated Sample Generator: requires a RandomDoubleSource 
+		constructor -->
+	<bean id="choleskyCorrelatedSampleGenerator" class="main.scala.predict.CholeskyCorrelatedSampleGenerator"
+		c:r-ref="isaacRandomDoubleSource" lazy-init="true" scope="prototype" />
+
+	<!-- Random Double Source using ISAAC pseudo-random number generator -->
+	<bean id="isaacRandomDoubleSource" class="main.scala.predict.RandomDoubleSourceFromRandom"
+		c:r-ref="apacheCommonsISAACRandomNumberGeneraor" lazy-init="true"
+		scope="prototype" />
+
+	<!-- Apache Commons implementation of cryptographic pseudo-random number 
+		generator -->
+	<bean id="apacheCommonsISAACRandomNumberGeneraor" class="org.apache.commons.math3.random.ISAACRandom"
+		lazy-init="true" scope="prototype" />
+
+	<!-- MySQL Prediction Persistor -->
+	<bean id="mySQLPredictionPersistor" class="main.scala.predict.MySQLPredictionPersistor"
+		lazy-init="true" scope="prototype" />
+
+	<!-- H-Day MCS Value Predictor: -->
+	<bean id="hDayMCSValuePredictor" class="main.scala.predict.HDayMCSValuePredictor"
+		c:p-ref="defaultPortfolioValuesSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
+		c:c-ref="choleskyCorrelatedSampleGenerator" c:m-ref="defaultInstrumentModelSourceFromFile"
+		lazy-init="true" />
+</beans>
