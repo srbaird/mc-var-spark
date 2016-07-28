@@ -23,27 +23,14 @@ import org.apache.spark.mllib.evaluation.RegressionMetrics
 /**
  * For want of a better name, the default model generator for data sets
  */
-class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], val f: RiskFactorSource[DataFrame], val m: InstrumentModelSource[Model[_]], val t: Seq[Transformer]) extends InstrumentModelGenerator
-    with InstrumentModelGeneratorSources[DataFrame, Model[_]] with Transformable {
+class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], val f: RiskFactorSource[DataFrame], val m: InstrumentModelSource[Model[_]], val t: Seq[Transformer]) extends InstrumentModelGenerator {
 
   def this() = this(null, null, null, Array[Transformer]())
   //
   // For the implementation of Transformable
   //
   private var transformers = Vector[Transformer]()
-  //
-  // Source of Market Risk Factor data (features)
-  //
-  private var factors: RiskFactorSource[DataFrame] = _
-  //
-  // Source of Instrument prices data (label)
-  //
-  private var prices: InstrumentPriceSource[DataFrame] = _
-  //
-  // Destination of generated models
-  //
-  private var models: InstrumentModelSource[Model[_]] = _
-
+ 
   private val noFactorsMsg = "No risk factors data was found"
   private val noPricesMsg = "No price data found"
 
@@ -51,25 +38,8 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
   val sc = ApplicationContext.sc
 
-  /**
-   *
-   */
-  override def riskFactorSource(source: RiskFactorSource[DataFrame]): Unit = {
-    validateSource(source)
-    factors = source
-  }
 
-  override def instrumentPriceSource(source: InstrumentPriceSource[DataFrame]): Unit = {
-    validateSource(source)
-    prices = source
-  }
-
-  override def instrumentModelSource(source: InstrumentModelSource[Model[_]]): Unit = {
-    validateSource(source)
-    models = source
-  }
-
-  override def hasSources: Boolean = {
+  def hasSources: Boolean = {
 
     (f != null && p != null && m != null)
   }
@@ -112,22 +82,11 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
     missingPrices ++ createdModels
   }
 
-  /**
-   * Add a Transformer to the sequence
-   */
-  override def add(t: Transformer): Unit = {
-
-    // don't allow a null value to be added
-    if (t == null) {
-      throw new IllegalArgumentException(s"Cannot add a null value")
-    }
-    transformers = transformers :+ t
-  }
 
   /**
    * Apply available transformers in sequence
    */
-  override def transform(d: DataFrame): DataFrame = {
+  def transform(d: DataFrame): DataFrame = {
 
     if (t.isEmpty) {
       d
