@@ -168,7 +168,7 @@ class InstrumentModelSourceFromFileWithDITest extends DITestBase {
 
     val ctx = ApplicationContext.getContext
     val hdsfName = ctx.getString("fs.default.name")
-    CrossValidatorModel.load(s"${hdsfName}/project/test/initial-testing/models/WIKI_CMC")
+    CrossValidatorModel.load(s"${hdsfName}/project/test/initial-testing/h-models/models/WIKI_CMC")
   }
 
 }

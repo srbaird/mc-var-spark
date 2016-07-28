@@ -10,6 +10,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.DataTypes
+import org.apache.spark.sql.Dataset
 import main.scala.application.ApplicationContext
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
@@ -36,7 +37,7 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
    * Take the DataFrame and return an h-day volatility data frame. The h-value is retrieved from the
    * application context as 'hDayVolatility.hDayValue'
    */
-  override def transform(df: DataFrame): DataFrame = {
+  override def transform(df: Dataset[_]): DataFrame = {
 
     if (df == null) {
       throw new IllegalArgumentException(s"Invalid data frame supplied: ${df}")
@@ -53,7 +54,7 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
     //
     // Create a matrix from the supplied rows
     //
-    val dfRowsAsMatrix = dfToArrayMatrix(df)
+    val dfRowsAsMatrix = dfToArrayMatrix(df.toDF())
     //
     //  Calculate the volatility (old value - new value). 
     //  Note that the window is the h-day value plus 1

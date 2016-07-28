@@ -7,6 +7,7 @@ import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.DataTypes
+import org.apache.spark.sql.Dataset
 
 /**
  * Remove all columns that are not of type Double
@@ -20,7 +21,7 @@ class DoublesOnlyTransformer(override val uid: String) extends Transformer {
   /**
    * Select only the valid columns from the supplied data frame
    */
-  override def transform(df: DataFrame): DataFrame = {
+  override def transform(df:Dataset[_]): DataFrame = {
 
     if (df == null) {
       throw new IllegalArgumentException(s"Invalid data frame supplied: ${df}")

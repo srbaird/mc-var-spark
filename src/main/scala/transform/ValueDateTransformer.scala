@@ -4,6 +4,7 @@ import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Dataset
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.types.StructField
@@ -37,7 +38,7 @@ class ValueDateTransformer(override val uid: String) extends Transformer {
   /**
    * Takes the column name and transforms it to a DateType
    */
-  override def transform(df: DataFrame): DataFrame = {
+  override def transform(df: Dataset[_]): DataFrame = {
 
 
     df.withColumn(s"${columnName}${tempColSuffix}", df(columnName).cast(DataTypes.DateType))

@@ -250,12 +250,12 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
   private def generateMetadata(dsCode: String, df: DataFrame, model: Model[_]) {
 
-    val result = model.transform(df).select("label", "prediction")
-    val predictionAndObservations = result.map { row =>
-      (row.get(0).asInstanceOf[Double], row.get(1).asInstanceOf[Double])
-    }
-    val metrics = new RegressionMetrics(predictionAndObservations)
-    println(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
+//    val result = model.transform(df).select("label", "prediction")
+//    val predictionAndObservations = result.map { row =>
+//      (row.get(0).asInstanceOf[Double], row.get(1).asInstanceOf[Double])
+//    }
+//    val metrics = new RegressionMetrics(predictionAndObservations)
+//    println(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
   }
 
   //

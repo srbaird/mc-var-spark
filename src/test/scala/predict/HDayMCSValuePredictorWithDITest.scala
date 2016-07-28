@@ -71,8 +71,15 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
     val result = instance.predict(expectedPCode, expectedAtDate)
     val mcsNumIterationsInt = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
     assert(result.length == mcsNumIterationsInt)
+    
+    // TODO: check values
+    val sorted =  result.map(p => p._1).sortWith(_ < _) // Sort ascending
+    val index = (sorted.length / 100 ) * (100 - 95) 
+    println(s"index ${index}  is ${sorted(index)}")
+  
   }
 
+  
   //
   //  Helper functions
   //  ****************
