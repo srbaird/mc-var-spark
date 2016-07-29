@@ -17,6 +17,7 @@ import java.util.HashMap
 import org.apache.hadoop.fs.FSDataOutputStream
 import java.io.InputStreamReader
 import com.typesafe.config.ConfigRenderOptions
+import org.apache.spark.ml.regression.LinearRegressionModel
 
 /**
  * Persistence layer using HDFS file system
@@ -207,9 +208,9 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   }
 
   // TODO: replace this with a Factory implementation
-  private def loadModel(dsCode: String, modelClass: String): CrossValidatorModel = {
+  private def loadModel(dsCode: String, modelClass: String): LinearRegressionModel = {
 
-    CrossValidatorModel.load(createModelPath(dsCode))
+    LinearRegressionModel.load(createModelPath(dsCode))
   }
 
   //

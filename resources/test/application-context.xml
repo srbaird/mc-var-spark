@@ -93,13 +93,23 @@
 		c:r-ref="isaacRandomDoubleSource" lazy-init="true" scope="prototype" />
 
 	<!-- Random Double Source using ISAAC pseudo-random number generator -->
+	<bean id="_isaacRandomDoubleSource" class="main.scala.predict.RandomDoubleSourceFromDistribution"
+		c:r-ref="apacheCommonsISAACRandomNumberGenerator" c:d-ref="normalDistribution"
+		lazy-init="true" scope="prototype" />
+
+	<!-- Normally Distributed Double Source using ISAAC pseudo-random number 
+		generator -->
 	<bean id="isaacRandomDoubleSource" class="main.scala.predict.RandomDoubleSourceFromRandom"
-		c:r-ref="apacheCommonsISAACRandomNumberGeneraor" lazy-init="true"
+		c:r-ref="apacheCommonsISAACRandomNumberGenerator" lazy-init="true"
 		scope="prototype" />
+
+	<!-- Normal Gaussian distribution org.apache.commons.math3.distribution -->
+	<bean id="normalDistribution" class="org.apache.commons.math3.distribution.NormalDistribution"
+		lazy-init="true" scope="prototype" />
 
 	<!-- Apache Commons implementation of cryptographic pseudo-random number 
 		generator -->
-	<bean id="apacheCommonsISAACRandomNumberGeneraor" class="org.apache.commons.math3.random.ISAACRandom"
+	<bean id="apacheCommonsISAACRandomNumberGenerator" class="org.apache.commons.math3.random.ISAACRandom"
 		lazy-init="true" scope="prototype" />
 
 	<!-- MySQL Prediction Persistor -->

@@ -1,20 +1,26 @@
 package main.scala.predict
 
 import java.time.LocalDate
+
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.annotation.Since
 import org.apache.spark.ml.Model
+import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.types.DataTypes
+import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+
 import main.scala.application.ApplicationContext
 import main.scala.factors.RiskFactorSource
 import main.scala.models.InstrumentModelSource
 import main.scala.portfolios.PortfolioValuesSource
 import main.scala.transform.DoublesOnlyTransformer
 import main.scala.transform.HDayVolatilityTransformer
-import main.scala.util.Functions._
-import org.apache.spark.sql.types.DataTypes
-import org.apache.spark.sql.types.StructField
+import main.scala.util.Functions.dfToArrayMatrix
+import main.scala.util.Functions.toDouble
 
 /**
  * Implement ValuePredictor to return a portfolio value using Monte Carlo simulation with h-day covariance matrix
@@ -30,10 +36,13 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
   lazy val valueColumn = appContext.getString("portfolioHolding.valueColumn")
   lazy val predictionColumn = appContext.getString("instrumentModel.predictionColumn")
 
+  lazy val priceValueColumn = appContext.getString("instrumentPrice.valueColumn")
+  lazy val priceKeyColumn = appContext.getString("instrumentPrice.keyColumn")
+
   private val indexColumn = "Index"
 
   /**
-   * 
+   *
    */
   override def predict(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
 
@@ -68,12 +77,12 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     // For correlation purposes use 1 year of factor data
 
     // TODO: remove this to a DI implementation
+
     val correlationFactors = new HDayVolatilityTransformer().transform(
       new DoublesOnlyTransformer().transform(
         f.factors(at.minusYears(1))))
-
     val correlationFactorsAsMatrix = dfToArrayMatrix(correlationFactors)
-    
+
     val correlatedSamples = c.sampleCorrelated(mcsNumIterations, correlationFactorsAsMatrix)
 
     // Add an index to ensure that the results can be correctly accumulated
@@ -85,6 +94,13 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     val correlatedSamplesAsRDDOfRows = sc.parallelize(correlatedSamplesWithIndex.map { a => Row.fromSeq(a) })
     val correlatedSamplesAsDF = sqlc.createDataFrame(correlatedSamplesAsRDDOfRows, correlatedSamplesWithIndexSchema)
 
+    val assembler = new VectorAssembler()
+      .setInputCols(correlatedSamplesAsDF.columns.diff(Array[String](priceKeyColumn, indexColumn))) // Remove label column and date
+      .setOutputCol("features")
+//    println(s"Prediction vector length = ${assembler.getInputCols.length}")
+//    println(assembler.getInputCols.mkString(", "))
+    val featuresDF = assembler.transform(correlatedSamplesAsDF)
+
     // Map to co-ordinate the results
     var accumulatedResults = Map[Double, Array[(String, Double, Double)]]()
 
@@ -92,11 +108,16 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     // Use a for loop initially to restrict the parallelism to the samples dimension
     for (portfolioHolding <- holdingsAsArray) {
 
-      val dsCode = portfolioHolding._1  // to simplify 
+      val dsCode = portfolioHolding._1 // to simplify 
       val holding = portfolioHolding._2 // the code
 
+      // TEMP TEMP
+//      println(s"Model is a ${m.getModel(dsCode).get.getClass.getSimpleName}")
+//      featuresDF.show()
+//      m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn).show
+
       // Apply the model to the generated samples
-      val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(correlatedSamplesAsDF).select(predictionColumn, indexColumn))
+      val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn))
 
       // Accumulate the results by index
       accumulatedResults = predictions.map { p => p(1) -> addResultToMap(accumulatedResults, p, dsCode, holding) }(scala.collection.breakOut)

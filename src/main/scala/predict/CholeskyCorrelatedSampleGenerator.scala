@@ -35,7 +35,7 @@ class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends Correlate
     //
     // Generate n x numOfFactors matrix of random samples
     //
-    val observations = (1L to n).map(l => (1 to numOfFactors).map(i => r.nextDouble).toArray).toArray
+    val observations = (1L to n).map(l => (1 to numOfFactors).map(i => (r.nextDouble - 0.5) * 2 ).toArray).toArray
     //
     // Convert to Matrix for multiplication
     //

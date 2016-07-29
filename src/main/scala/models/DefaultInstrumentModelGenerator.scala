@@ -19,6 +19,8 @@ import main.scala.transform.Transformable
 import org.apache.spark.ml.Transformer
 import java.time.LocalDate
 import org.apache.spark.mllib.evaluation.RegressionMetrics
+import main.scala.util.Functions._
+import org.apache.spark.mllib.regression.LinearRegressionWithSGD
 
 /**
  * For want of a better name, the default model generator for data sets
@@ -30,14 +32,15 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   // For the implementation of Transformable
   //
   private var transformers = Vector[Transformer]()
- 
+
   private val noFactorsMsg = "No risk factors data was found"
   private val noPricesMsg = "No price data found"
 
+  val modelLabelColumn = "label"
+  
   private val appContext = ApplicationContext.getContext
 
   val sc = ApplicationContext.sc
-
 
   def hasSources: Boolean = {
 
@@ -81,7 +84,6 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
     missingPrices ++ createdModels
   }
-
 
   /**
    * Apply available transformers in sequence
@@ -157,11 +159,13 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
     try {
       val e = getModelEstimator(dsCode, trainDF)
       // rename the training dataframe column
-      val regressionDF = trainDF.withColumnRenamed(getlabelColumn, "label")
+      val regressionDF = trainDF.withColumnRenamed(getlabelColumn, modelLabelColumn)
       // fit the data
-      val model = e.fit(regressionDF)
+      //      val model = e.fit(regressionDF)
       // TEMP TEMP 
-      generateMetadata(dsCode, regressionDF, model.asInstanceOf[Model[_]])
+      val model = tryLinearRegressionOnly(regressionDF)
+      // End of TEMP
+      //     generateMetadata(dsCode, regressionDF, model)
       // persist the model
       persistTheModel(dsCode, model)
     } catch {
@@ -173,6 +177,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   //  Returns a CrossValidator as an estimator
   //
   private def getModelEstimator(dsCode: String, trainDF: DataFrame): Estimator[_] = {
+
 
     val assembler = new VectorAssembler()
       .setInputCols(trainDF.columns.diff(Array[String](getkeyColumn, getlabelColumn))) // Remove label column and date
@@ -195,6 +200,40 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   }
 
   //
+  // 
+  //
+  private def tryLinearRegressionOnly(trainDF: DataFrame): Model[_] = {
+
+    val assembler = new VectorAssembler()
+      .setInputCols(trainDF.columns.diff(Array[String](modelLabelColumn, getlabelColumn, getkeyColumn))) // Remove label column and date
+      .setOutputCol("features")
+    
+    val lir = new LinearRegression()
+      .setFeaturesCol("features")
+      .setLabelCol(modelLabelColumn)
+      .setRegParam(0.15)
+      .setElasticNetParam(0.0)
+      .setMaxIter(100)
+      .setTol(1E-6)
+
+    // Train the model
+    val training = assembler.transform(trainDF)
+    val startTime = System.nanoTime()
+    val lirModel = lir.fit(training)
+    val elapsedTime = (System.nanoTime() - startTime) / 1e9
+    println(s"Training time: $elapsedTime seconds")
+
+    val summary = lirModel.evaluate(training)
+
+    println(s"Summary. MSE: ${summary.meanSquaredError} r-squared: ${summary.r2}")
+
+//    val result = lirModel.transform(training).select("label", "prediction")
+//    result.show()
+    lirModel
+
+  }
+
+  //
   // persist the model
   //
   private def persistTheModel(dsCode: String, model: Any): (Boolean, String) = {
@@ -209,12 +248,11 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
   private def generateMetadata(dsCode: String, df: DataFrame, model: Model[_]) {
 
-//    val result = model.transform(df).select("label", "prediction")
-//    val predictionAndObservations = result.map { row =>
-//      (row.get(0).asInstanceOf[Double], row.get(1).asInstanceOf[Double])
-//    }
-//    val metrics = new RegressionMetrics(predictionAndObservations)
-//    println(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
+    val result = model.transform(df).select("label", "prediction")
+    result.show()
+    val resultAsArray = dfToArrayMatrix(df).map { row => (row(0), row(1)) }
+    val metrics = new RegressionMetrics(sc.parallelize(resultAsArray))
+    println(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
   }
 
   //

@@ -22,7 +22,7 @@ dfs 	{
  					}
  		}
  , mcs {
- 		mcsNumIterations = "10000"
+ 		mcsNumIterations = "100000"
  		}
  , hDayVolatility {
  		hDayValue = "10"

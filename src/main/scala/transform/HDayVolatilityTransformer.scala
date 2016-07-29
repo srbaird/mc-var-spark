@@ -77,11 +77,13 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
     if (schema == null) {
       throw new IllegalArgumentException(s"Invalid schema supplied: ${schema}")
     }
-    val validDataType = DataTypes.DoubleType
+    val doubleDataType = DataTypes.DoubleType
+    val integerDataType = DataTypes.IntegerType
 
     StructType(schema.map { sf =>
       sf match {
-        case StructField(name, `validDataType`, nullable, metadata) => sf
+        case StructField(name, `doubleDataType`, nullable, metadata) => sf
+        case StructField(name, `integerDataType`, nullable, metadata) => StructField(name, doubleDataType, nullable, metadata)
         case _ => throw new IllegalArgumentException(s"Schema contains invalid data type")
       }
     })

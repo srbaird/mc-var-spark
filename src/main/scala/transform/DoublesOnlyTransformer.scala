@@ -37,14 +37,15 @@ class DoublesOnlyTransformer(override val uid: String) extends Transformer {
   }
 
   /**
-   * Filter out any Struct fields not of the appropriate type
+   * Filter out any Struct fields not of the appropriate type (integer types are allowed to be parsed)
    */
   override def transformSchema(schema: StructType): StructType = {
 
     if (schema == null) {
       throw new IllegalArgumentException(s"Invalid schema supplied: ${schema}")
     }
-    val validDataType = DataTypes.DoubleType
-    StructType(schema.filter { _.dataType == validDataType })
+    val doubleDataType = DataTypes.DoubleType
+    val integerDataType = DataTypes.IntegerType
+    StructType(schema.filter { s => s.dataType == doubleDataType || s.dataType == integerDataType})
   }
 }
