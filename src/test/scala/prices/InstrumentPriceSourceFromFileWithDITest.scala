@@ -123,6 +123,20 @@ class InstrumentPriceSourceFromFileWithDITest extends DITestBase {
     val result = instance.getPrices(expectedDSCode, fromDate, toDate)
     assert(result.count() == expectedRowCount)
   }
+  
+    /**
+   * Get a subset of the test dataset based on a date range
+   */
+  test("Get a test subset of the month up to 01-Jun") {
+
+    val expectedDSCode = "WIKI_CMC"
+    
+    val toDate = LocalDate.of(2016, 6, 1)
+
+    val expectedRowCount = 22L
+    val result = instance.getPrices(expectedDSCode, toDate.minusMonths(1), toDate)
+    assert(result.count() == expectedRowCount)
+  }
 
   /**
    * Get a subset of the test dataset based on a from-date

@@ -92,8 +92,9 @@
 	<bean id="choleskyCorrelatedSampleGenerator" class="main.scala.predict.CholeskyCorrelatedSampleGenerator"
 		c:r-ref="inverseRandomDoubleSource" lazy-init="true" scope="prototype" />
 
-	<!-- Random Double Source using Inverse transform sampling  -->
-	<bean id="inverseRandomDoubleSource" class="main.scala.predict.InverseRandomDoubleSourceFromDistribution"
+	<!-- Random Double Source using Inverse transform sampling -->
+	<bean id="inverseRandomDoubleSource"
+		class="main.scala.predict.InverseRandomDoubleSourceFromDistribution"
 		c:r-ref="apacheCommonsISAACRandomNumberGenerator" c:d-ref="normalDistribution"
 		lazy-init="true" scope="prototype" />
 
@@ -127,4 +128,10 @@
 	<bean id="covarianceValuePredictor" class="main.scala.predict.CovarianceValuePredictor"
 		c:pv-ref="defaultPortfolioValuesSourceFromFile" c:pr-ref="defaultInstrumentPriceSourceFromFile"
 		lazy-init="true" />
+
+	<!-- Observation Value Generator: -->
+	<bean id="observationValueGenerator" class="main.scala.predict.ObservationValueGenerator"
+		c:pv-ref="defaultPortfolioValuesSourceFromFile" c:pr-ref="defaultInstrumentPriceSourceFromFile"
+		lazy-init="true" />
+
 </beans>
