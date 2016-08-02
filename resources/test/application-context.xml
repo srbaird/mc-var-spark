@@ -92,7 +92,7 @@
 	<bean id="choleskyCorrelatedSampleGenerator" class="main.scala.predict.CholeskyCorrelatedSampleGenerator"
 		c:r-ref="inverseRandomDoubleSource" lazy-init="true" scope="prototype" />
 
-	<!-- Random Double Source using ISAAC pseudo-random number generator -->
+	<!-- Random Double Source using Inverse transform sampling  -->
 	<bean id="inverseRandomDoubleSource" class="main.scala.predict.InverseRandomDoubleSourceFromDistribution"
 		c:r-ref="apacheCommonsISAACRandomNumberGenerator" c:d-ref="normalDistribution"
 		lazy-init="true" scope="prototype" />

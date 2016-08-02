@@ -28,7 +28,13 @@
 	<!-- Cholesky Correlated Sample Generator: requires a RandomDoubleSource 
 		constructor -->
 	<bean id="choleskyCorrelatedSampleGenerator" class="main.scala.predict.CholeskyCorrelatedSampleGenerator"
-		c:r-ref="isaacRandomDoubleSource" lazy-init="true" scope="prototype" />
+		c:r-ref="inverseRandomDoubleSource" lazy-init="true" scope="prototype" />
+
+	<!-- Random Double Source using Inverse transform sampling -->
+	<bean id="inverseRandomDoubleSource"
+		class="main.scala.predict.InverseRandomDoubleSourceFromDistribution"
+		c:r-ref="apacheCommonsISAACRandomNumberGenerator" c:d-ref="normalDistribution"
+		lazy-init="true" scope="prototype" />
 
 	<!-- Random Double Source using ISAAC pseudo-random number generator -->
 	<bean id="isaacRandomDoubleSource" class="main.scala.predict.RandomDoubleSourceFromRandom"
