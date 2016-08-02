@@ -12,6 +12,7 @@ import org.apache.spark.SparkContext
 import java.io.File
 import main.scala.models.InstrumentModelGenerator
 import java.time.LocalDate
+import org.apache.spark.sql.SparkSession
 
 object GenerateModels {
 
@@ -22,6 +23,8 @@ object GenerateModels {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
+    println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
+
     // TODO: Identify and process passed arguments
     run
     println("Completed run")
@@ -29,24 +32,24 @@ object GenerateModels {
 
   private def run = {
 
-    val springContextFileName = "/home/user0001/Desktop/Birkbeck/Project/1.0.0/configuration/application-context.xml"
+    val spark = SparkSession.builder().getOrCreate()
+
+    val applicationContextFileName = "/home/user0001/Desktop/Birkbeck/Project/1.0.0/configuration/applicationContext"
+    ApplicationContext.useConfigFile(new File(applicationContextFileName))
+
+    val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
 
     // Generate the application context
     val ctx = new GenericApplicationContext();
     val xmlReader = new XmlBeanDefinitionReader(ctx);
-    xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springContextFileName)));
+    xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springApplicationContextFileName)));
     ctx.refresh();
 
-    val applicationContextFileNameBeanName = "applicationContextFileName"
-    val applicationContextFileName = ctx.getBean(applicationContextFileNameBeanName).asInstanceOf[String]
-
-    ApplicationContext.useConfigFile(new File(applicationContextFileName))
-
-    // Generate the Spark Context
-    val sc = new SparkContext("local[4]", "MonteCarloVaR", new SparkConf(false))
+    // Get the Spark Context
+    val sc = spark.sparkContext
     ApplicationContext.sc(sc)
 
-    // Get an instance of a value predictor
+    // Get an instance of a model generator
     val generatorBeanName = "instrumentModelGenerator"
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[InstrumentModelGenerator]
 

@@ -44,8 +44,6 @@ object CovarianceVar {
     xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springApplicationContextFileName)));
     ctx.refresh();
 
-    ApplicationContext.useConfigFile(new File(applicationContextFileName))
-
     // Get the Spark Context
     val sc = spark.sparkContext
     ApplicationContext.sc(sc)
