@@ -55,7 +55,7 @@ object MonteCarloVar {
 
     // Use parameter to evaluate a portolio at a given date
     val portfolioName = "Test_Portfolio_1"
-    val valueAtDate = LocalDate.of(2016, 6, 1)
+    val valueAtDate = LocalDate.of(2016, 6, 2)
 
     // Get an instance of a prediction persistor
     val prediction = predictor.predict(portfolioName, valueAtDate)
