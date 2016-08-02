@@ -67,7 +67,7 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
   test("predict using a test portfolio code") {
 
     val expectedPCode = "Test_Portfolio_1"
-    val expectedAtDate = LocalDate.of(2016, 6, 1)
+    val expectedAtDate = LocalDate.of(2016, 6, 2)
     val result = instance.predict(expectedPCode, expectedAtDate)
     val mcsNumIterationsInt = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
     assert(result.length == mcsNumIterationsInt)

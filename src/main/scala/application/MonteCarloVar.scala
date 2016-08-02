@@ -3,7 +3,6 @@ package main.scala.application
 import java.io.File
 import java.net.URL
 import java.time.LocalDate
-
 import org.apache.hadoop.yarn.util.RackResolver
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
@@ -12,9 +11,9 @@ import org.apache.spark.SparkContext
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.core.io.UrlResource
-
 import main.scala.predict.PredictionPersistor
 import main.scala.predict.ValuePredictor
+import org.apache.spark.sql.SparkSession
 
 object MonteCarloVar {
 
@@ -25,6 +24,8 @@ object MonteCarloVar {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
     
+    println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
+
     // TODO: Identify and process passed arguments
     run
     println("Completed run")
@@ -32,21 +33,23 @@ object MonteCarloVar {
 
   private def run = {
 
-    val springContextFileName = "/home/user0001/Desktop/Birkbeck/Project/1.0.0/configuration/application-context.xml"
+    val spark = SparkSession.builder().getOrCreate()
+
+    val applicationContextFileName = "/home/user0001/Desktop/Birkbeck/Project/1.0.0/configuration/applicationContext"
+    ApplicationContext.useConfigFile(new File(applicationContextFileName))
+
+    val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
 
     // Generate the application context
     val ctx = new GenericApplicationContext();
     val xmlReader = new XmlBeanDefinitionReader(ctx);
-    xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springContextFileName)));
+    xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springApplicationContextFileName)));
     ctx.refresh();
-
-    val applicationContextFileNameBeanName = "applicationContextFileName"
-    val applicationContextFileName = ctx.getBean(applicationContextFileNameBeanName).asInstanceOf[String]
 
     ApplicationContext.useConfigFile(new File(applicationContextFileName))
 
-    // Generate the Spark Context
-    val sc = new SparkContext("local[4]", "MonteCarloVaR", new SparkConf(false))
+    // Get the Spark Context
+    val sc = spark.sparkContext
     ApplicationContext.sc(sc)
 
     // Get an instance of a value predictor
@@ -74,7 +77,6 @@ object MonteCarloVar {
     val percentile99 = getPercentile(99, predictionRange)
     writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, percentile99)
 
-    sc.stop()
   }
   private def getPercentile(percentile: Double, range: Array[Double]): Double = {
 
