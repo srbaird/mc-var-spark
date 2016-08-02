@@ -2,8 +2,6 @@ package main.scala.predict
 
 import java.time.LocalDate
 
-import org.apache.spark.annotation.DeveloperApi
-import org.apache.spark.annotation.Since
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.DataFrame
@@ -25,7 +23,7 @@ import main.scala.util.Functions.toDouble
 /**
  * Implement ValuePredictor to return a portfolio value using Monte Carlo simulation with h-day covariance matrix
  */
-class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSource[DataFrame], c: CorrelatedSampleGenerator, m: InstrumentModelSource[Model[_]]) extends ValuePredictor {
+class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSource[DataFrame], c: CorrelatedSampleGenerator, m: InstrumentModelSource[Model[_]]) extends ValueGenerator {
 
   val appContext = ApplicationContext.getContext
 
@@ -44,7 +42,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
   /**
    *
    */
-  override def predict(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
+  override def value(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
 
     if (pCode == null || pCode.isEmpty()) {
       throw new IllegalArgumentException(s"Invalid portfolio code supplied: ${pCode}")

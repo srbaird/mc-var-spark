@@ -12,8 +12,8 @@ import org.springframework.beans.factory.xml.XmlBeanDefinitionReader
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.core.io.UrlResource
 import main.scala.predict.PredictionPersistor
-import main.scala.predict.ValuePredictor
 import org.apache.spark.sql.SparkSession
+import main.scala.predict.ValueGenerator
 
 object MonteCarloVar {
 
@@ -54,14 +54,14 @@ object MonteCarloVar {
 
     // Get an instance of a value predictor
     val predictorBeanName = "valuePredictor"
-    val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValuePredictor]
+    val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameter to evaluate a portolio at a given date
     val portfolioName = "Test_Portfolio_1"
     val valueAtDate = LocalDate.of(2016, 6, 2)
 
     // Get an instance of a prediction persistor
-    val prediction = predictor.predict(portfolioName, valueAtDate)
+    val prediction = predictor.value(portfolioName, valueAtDate)
 
     // Write percentile values
     val instanceBeanName = "predictionPersistor"

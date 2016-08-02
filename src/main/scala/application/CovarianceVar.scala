@@ -7,11 +7,11 @@ import main.scala.predict.PredictionPersistor
 import org.springframework.context.support.GenericApplicationContext
 import java.time.LocalDate
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader
-import main.scala.predict.ValuePredictor
 import org.apache.spark.sql.SparkSession
 import java.io.File
 import org.springframework.core.io.UrlResource
 import java.net.URL
+import main.scala.predict.ValueGenerator
 
 object CovarianceVar {
 
@@ -50,14 +50,14 @@ object CovarianceVar {
 
     // Get an instance of a value predictor
     val predictorBeanName = "covarianceValuePredictor"
-    val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValuePredictor]
+    val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameter to evaluate a portolio at a given date
     val portfolioName = "Test_Portfolio_1"
     val valueAtDate = LocalDate.of(2016, 6, 1)
 
     // Get an instance of a prediction persistor
-    val prediction = predictor.predict(portfolioName, valueAtDate)
+    val prediction = predictor.value(portfolioName, valueAtDate)
 
     // Write percentile values
     val instanceBeanName = "predictionPersistor"

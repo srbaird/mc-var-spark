@@ -39,7 +39,7 @@ class CovarianceValuePredictorWithDITest extends DITestBase {
   test("predict with a null portfolio code") {
 
     intercept[IllegalArgumentException] {
-      instance.predict(null, null)
+      instance.value(null, null)
     }
   }
 
@@ -49,7 +49,7 @@ class CovarianceValuePredictorWithDITest extends DITestBase {
   test("predict with an empty portfolio code") {
 
     intercept[IllegalArgumentException] {
-      instance.predict("", null)
+      instance.value("", null)
     }
   }
 
@@ -59,7 +59,7 @@ class CovarianceValuePredictorWithDITest extends DITestBase {
   test("predict with a null at-date code") {
 
     intercept[IllegalArgumentException] {
-      instance.predict("Portfolio code", null)
+      instance.value("Portfolio code", null)
     }
   }
 
@@ -94,7 +94,7 @@ class CovarianceValuePredictorWithDITest extends DITestBase {
 
     val expectedPCode = "Test_Portfolio_1"
     val expectedAtDate = LocalDate.of(2016, 6, 2)
-    val result = instance.predict(expectedPCode, expectedAtDate)
+    val result = instance.value(expectedPCode, expectedAtDate)
     assert(result.length == 1)  
     println(s"10-day 95% Var = ${1.645 * result(0)._1}")
     println(s"10-day 99% Var = ${2.58 * result(0)._1}")

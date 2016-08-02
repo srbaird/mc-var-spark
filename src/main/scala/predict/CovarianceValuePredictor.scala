@@ -12,7 +12,7 @@ import main.scala.transform.HDayVolatilityTransformer
 import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.stat.correlation.Covariance
 
-class CovarianceValuePredictor(pv: PortfolioValuesSource[DataFrame], pr: InstrumentPriceSource[DataFrame]) extends ValuePredictor {
+class CovarianceValuePredictor(pv: PortfolioValuesSource[DataFrame], pr: InstrumentPriceSource[DataFrame]) extends ValueGenerator {
 
   val appContext = ApplicationContext.getContext
 
@@ -24,7 +24,7 @@ class CovarianceValuePredictor(pv: PortfolioValuesSource[DataFrame], pr: Instrum
    * Simple cash portfolio valuation. Given matrix M of asset returns over a time period and vector V of positions then
    * the calculation is the square root of (transpose(V) * M * V)
    */
-  override def predict(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
+  override def value(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
 
     if (pCode == null || pCode.isEmpty()) {
       throw new IllegalArgumentException(s"Invalid portfolio code supplied: ${pCode}")

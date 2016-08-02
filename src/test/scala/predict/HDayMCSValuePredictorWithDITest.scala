@@ -37,7 +37,7 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
   test("predict with a null portfolio code") {
 
     intercept[IllegalArgumentException] {
-      instance.predict(null, null)
+      instance.value(null, null)
     }
   }
 
@@ -47,7 +47,7 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
   test("predict with an empty portfolio code") {
 
     intercept[IllegalArgumentException] {
-      instance.predict("", null)
+      instance.value("", null)
     }
   }
 
@@ -57,7 +57,7 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
   test("predict with a null at-date code") {
 
     intercept[IllegalArgumentException] {
-      instance.predict("Portfolio code", null)
+      instance.value("Portfolio code", null)
     }
   }
 
@@ -68,7 +68,7 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
 
     val expectedPCode = "Test_Portfolio_1"
     val expectedAtDate = LocalDate.of(2016, 6, 2)
-    val result = instance.predict(expectedPCode, expectedAtDate)
+    val result = instance.value(expectedPCode, expectedAtDate)
     val mcsNumIterationsInt = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
     assert(result.length == mcsNumIterationsInt)
     
