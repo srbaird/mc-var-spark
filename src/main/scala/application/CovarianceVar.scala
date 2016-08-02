@@ -56,7 +56,7 @@ object CovarianceVar {
 
     // Use parameter to evaluate a portolio at a given date
     val portfolioName = "Test_Portfolio_1"
-    val valueAtDate = LocalDate.of(2016, 6, 2)
+    val valueAtDate = LocalDate.of(2016, 6, 1)
 
     // Get an instance of a prediction persistor
     val prediction = predictor.predict(portfolioName, valueAtDate)
@@ -69,11 +69,11 @@ object CovarianceVar {
     val result = prediction(0)._1
 
     val hValue = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
-    val sigma95 = ApplicationContext.getContext.getDouble("prediction.sigma95")
-    val sigma99 = ApplicationContext.getContext.getDouble("prediction.sigma99")
+    val sigma95 = ApplicationContext.getContext.getDouble("predictions.sigma95")
+    val sigma99 = ApplicationContext.getContext.getDouble("predictions.sigma99")
 
-    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, sigma95 * result)
+    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, -1 * sigma95 * result)
 
-    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, sigma99 * result)
+    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, -1 * sigma99 * result)
   }
 }
