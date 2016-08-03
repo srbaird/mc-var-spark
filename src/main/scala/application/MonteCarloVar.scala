@@ -51,7 +51,7 @@ object MonteCarloVar extends StandardArguments {
     ApplicationContext.sc(sc)
 
     // Get an instance of a value predictor
-    val predictorBeanName = "valuePredictor"
+    val predictorBeanName = ApplicationContext.getContext.getString("springFramework.predictorBeanName")
     val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameter to evaluate a portolio at a given date
@@ -62,13 +62,13 @@ object MonteCarloVar extends StandardArguments {
     val prediction = predictor.value(portfolioName, valueAtDate)
 
     // Write percentile values
-    val instanceBeanName = "predictionPersistor"
+    val instanceBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
     val writer = ctx.getBean(instanceBeanName).asInstanceOf[PredictionPersistor]
 
     // 
     val predictionRange = prediction.map(p => p._1)
 
-    val hValue = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
+    val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
     val percentile95 = getPercentile(95, predictionRange)
     writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, percentile95)
 

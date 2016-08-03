@@ -8,7 +8,7 @@ trait StandardArguments {
     def validateArgs(args: Array[String]): (String, String, LocalDate) = {
 
     if (args.length < 3) {
-      throw new IllegalArgumentException(s"Expected 2 arguments, got ${args.length}")
+      throw new IllegalArgumentException(s"Expected 3 arguments, got ${args.length}")
     }
     val file = new File(args(0))
     if (!file.exists()) {

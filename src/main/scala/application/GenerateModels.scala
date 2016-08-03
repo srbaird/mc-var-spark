@@ -50,7 +50,7 @@ object GenerateModels {
     ApplicationContext.sc(sc)
 
     // Get an instance of a model generator
-    val generatorBeanName = "instrumentModelGenerator"
+    val generatorBeanName = ApplicationContext.getContext.getString("springFramework.instrumentModelGenerator")
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[InstrumentModelGenerator]
 
     // Build parameters

@@ -52,7 +52,7 @@ object GenerateObservations  extends StandardArguments{
     ApplicationContext.sc(sc)
 
     // Get an instance of a model generator
-    val generatorBeanName = "observationValueGenerator"
+    val generatorBeanName = ApplicationContext.getContext.getString("springFramework.observationGeneratorBeanName")
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameter to evaluate a portolio at a given date
@@ -63,13 +63,13 @@ object GenerateObservations  extends StandardArguments{
     val observation = generator.value(portfolioName, valueAtDate)
 
     // Write percentile values
-    val instanceBeanName = "predictionPersistor"
+    val instanceBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
     val writer = ctx.getBean(instanceBeanName).asInstanceOf[PredictionPersistor]
 
     // Result is a single row
     val result = observation(0)._1
 
-    val hValue = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
+    val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
 
     writer.persist(portfolioName, valueAtDate, generator.getClass.getSimpleName, hValue, 0, result)
   }

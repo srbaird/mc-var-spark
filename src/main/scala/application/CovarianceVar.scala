@@ -50,7 +50,7 @@ object CovarianceVar extends StandardArguments {
     ApplicationContext.sc(sc)
 
     // Get an instance of a value predictor
-    val predictorBeanName = "covarianceValuePredictor"
+    val predictorBeanName = ApplicationContext.getContext.getString("springFramework.covariancePredictorBeanName")
     val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameters to evaluate a portolio at a given date
@@ -61,13 +61,13 @@ object CovarianceVar extends StandardArguments {
     val prediction = predictor.value(portfolioName, valueAtDate)
 
     // Write percentile values
-    val instanceBeanName = "predictionPersistor"
+    val instanceBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
     val writer = ctx.getBean(instanceBeanName).asInstanceOf[PredictionPersistor]
 
     // Result is a single row
     val result = prediction(0)._1
 
-    val hValue = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
+    val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
     val sigma95 = ApplicationContext.getContext.getDouble("predictions.sigma95")
     val sigma99 = ApplicationContext.getContext.getDouble("predictions.sigma99")
 
