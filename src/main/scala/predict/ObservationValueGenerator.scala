@@ -57,6 +57,9 @@ class ObservationValueGenerator(pv: PortfolioValuesSource[DataFrame], pr: Instru
     Array((valuations.foldLeft(0D) { (acc, t) => acc + t._2 }, valuations))
   }
 
+  //
+  // 
+  //
   private def getHDayPriceForInstrument(instrument: String, at: LocalDate): Double = {
 
     // Use a 20 days worth of h-day prices TODO: test that this has enough data for the h-day variable

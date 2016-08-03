@@ -73,12 +73,14 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
     // Generate a DataFrame of n samples 
     // For correlation purposes use 1 year of factor data
-
+    // Don't include observations for the given date
+    val to = at.minusDays(1)
+    val from = to.minusYears(1)
     // TODO: remove this to a DI implementation
 
     val correlationFactors = new HDayVolatilityTransformer().transform(
       new DoublesOnlyTransformer().transform(
-        f.factors(at.minusYears(1))))
+        f.factors(from, to)))
     val correlationFactorsAsMatrix = dfToArrayMatrix(correlationFactors)
 
     val correlatedSamples = c.sampleCorrelated(mcsNumIterations, correlationFactorsAsMatrix)
@@ -95,8 +97,8 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     val assembler = new VectorAssembler()
       .setInputCols(correlatedSamplesAsDF.columns.diff(Array[String](priceKeyColumn, indexColumn))) // Remove label column and date
       .setOutputCol("features")
-//    println(s"Prediction vector length = ${assembler.getInputCols.length}")
-//    println(assembler.getInputCols.mkString(", "))
+    //    println(s"Prediction vector length = ${assembler.getInputCols.length}")
+    //    println(assembler.getInputCols.mkString(", "))
     val featuresDF = assembler.transform(correlatedSamplesAsDF)
 
     // Map to co-ordinate the results
@@ -110,9 +112,9 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
       val holding = portfolioHolding._2 // the code
 
       // TEMP TEMP
-//      println(s"Model is a ${m.getModel(dsCode).get.getClass.getSimpleName}")
-//      featuresDF.show()
-//      m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn).show
+      //      println(s"Model is a ${m.getModel(dsCode).get.getClass.getSimpleName}")
+      //      featuresDF.show()
+      //      m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn).show
 
       // Apply the model to the generated samples
       val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn))

@@ -55,14 +55,17 @@ class CovarianceValuePredictor(pv: PortfolioValuesSource[DataFrame], pr: Instrum
 
     // Combine the price dataframes
     // For correlation purposes select 1 year each of price data
-    val from = at.minusYears(1)
+    // Don't include observations on the supplied date
+    // Don't include observations for the given date
+    val to = at.minusDays(1)
+    val from = to.minusYears(1)
 
     // TODO: Add method to trait to return an array of price values within a date range
     // Joining dataframes is only viable with a small number of instruments
     val pricesDF = if (holdingsAsArray.length == 1) {
-      pr.getPrices(holdingsAsArray.head._1, from, at)
+      pr.getPrices(holdingsAsArray.head._1, from, to)
     } else {
-      holdingsAsArray.tail.foldLeft(pr.getPrices(holdingsAsArray.head._1, from, at)) { (acc: DataFrame, e: (String, Int)) => acc.join(pr.getPrices(e._1, from, at), keyColumn) }
+      holdingsAsArray.tail.foldLeft(pr.getPrices(holdingsAsArray.head._1, from, to)) { (acc: DataFrame, e: (String, Int)) => acc.join(pr.getPrices(e._1, from, to), keyColumn) }
     }
 
     // Turn the resolved price dataframe into an h-day variance matrix
@@ -83,9 +86,9 @@ class CovarianceValuePredictor(pv: PortfolioValuesSource[DataFrame], pr: Instrum
     val r = v.transpose().multiply(m).multiply(v)
     assert(r.getColumnDimension == 1)
     assert(r.getRowDimension == 1)
-    
+
     val portfolioReturn = Math.sqrt(r.getColumn(0)(0))
-    
+
     // return with an empty array of individual instrument valuations
     Array((portfolioReturn, Array[(String, Double)]()))
   }

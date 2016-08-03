@@ -13,7 +13,7 @@ import org.springframework.core.io.UrlResource
 import java.net.URL
 import main.scala.predict.ValueGenerator
 
-object CovarianceVar {
+object CovarianceVar extends StandardArguments {
 
   def main(args: Array[String]) {
 
@@ -25,16 +25,17 @@ object CovarianceVar {
     println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
 
     // TODO: Identify and process passed arguments
-    run
+    run(args)
     println("Completed run")
   }
 
-  private def run = {
+  private def run(args: Array[String]) = {
+
+    val validArgs = validateArgs(args)
 
     val spark = SparkSession.builder().getOrCreate()
-
-    val applicationContextFileName = "/home/user0001/Desktop/Birkbeck/Project/1.0.0/configuration/applicationContext"
-    ApplicationContext.useConfigFile(new File(applicationContextFileName))
+ 
+    ApplicationContext.useConfigFile(new File(validArgs._1))
 
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
 
@@ -52,9 +53,9 @@ object CovarianceVar {
     val predictorBeanName = "covarianceValuePredictor"
     val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
 
-    // Use parameter to evaluate a portolio at a given date
-    val portfolioName = "Test_Portfolio_1"
-    val valueAtDate = LocalDate.of(2016, 6, 1)
+    // Use parameters to evaluate a portolio at a given date
+    val portfolioName = validArgs._2
+    val valueAtDate = validArgs._3
 
     // Get an instance of a prediction persistor
     val prediction = predictor.value(portfolioName, valueAtDate)
