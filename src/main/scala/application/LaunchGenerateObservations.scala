@@ -2,7 +2,7 @@ package main.scala.application
 
 import org.apache.spark.sql.SparkSession
 
-object LaunchGenerateObservations {
+object LaunchGenerateObservations extends PreLoadHadoopConfig {
 
   def main(args: Array[String]) {
 
@@ -12,6 +12,8 @@ object LaunchGenerateObservations {
       .master("local[3]")
       .getOrCreate()
 
+    load
+        
     GenerateObservations.main(args)
 
     spark.sparkContext.stop()

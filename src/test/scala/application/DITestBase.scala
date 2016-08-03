@@ -14,8 +14,6 @@ class DITestBase extends SparkTestBase {
   var ctx: GenericApplicationContext = _
   val springContextFileName = "resources/test/application-context.xml"
 
-
-
   override def beforeAll(): Unit = {
 
     super.beforeAll
@@ -31,7 +29,6 @@ class DITestBase extends SparkTestBase {
     super.beforeEach
 
   }
-
 
   override def afterEach() {
 
@@ -50,7 +47,9 @@ class DITestBase extends SparkTestBase {
     val applicationContextFileNameBeanName = "applicationContextFileName"
     val applicationContextFileName = ctx.getBean(applicationContextFileNameBeanName).asInstanceOf[String]
     // Set the Application Context values
-    ApplicationContext.useConfigFile(new File(applicationContextFileName))
+    val contextFile = new File(applicationContextFileName)
+    ApplicationContext.useConfigFile(contextFile)
+    ApplicationContext.useHadoopConfig(contextFile)
     ApplicationContext.sc(sc)
   }
 

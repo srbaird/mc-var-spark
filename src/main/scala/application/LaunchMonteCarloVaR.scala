@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 /**
  * Substitute for DriverWrapper
  */
-object LaunchMonteCarloVaR {
+object LaunchMonteCarloVaR extends PreLoadHadoopConfig {
 
   def main(args: Array[String]) {
 
@@ -14,6 +14,8 @@ object LaunchMonteCarloVaR {
       .appName("H-Day MonteCarlo VaR")
       .master("local[3]")
       .getOrCreate()
+
+    load
 
     MonteCarloVar.main(args)
 

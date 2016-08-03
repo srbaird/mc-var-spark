@@ -13,21 +13,28 @@ import org.apache.spark.SparkContext
 object ApplicationContext {
 
   private var _context: Config = _
-  
-  private var _sc:SparkContext = _
-  
+
+  private var _sc: SparkContext = _
+
   def sc = _sc
-  def sc(ctx:SparkContext) =  {
-    
+  def sc(ctx: SparkContext) = {
+
     if (ctx == null) throw new NullPointerException("Supplied context  was null")
     _sc = ctx
   }
 
   def getContext: Config = _context
 
-  private lazy val _conf: Configuration = buildHadoopConfig
+  private var _conf: Configuration = _
 
-  def getHadoopConfig = _conf
+  def getHadoopConfig = {
+
+    if (sc != null && sc.hadoopConfiguration.get("fs.default.name") != "file:///") {
+      sc.hadoopConfiguration
+    } else {
+      _conf
+    }
+  }
 
   def useConfigFile(configFile: File): Config = {
 
@@ -38,10 +45,11 @@ object ApplicationContext {
     _context = ConfigFactory.parseFile(configFile); getContext
   }
 
-  private def buildHadoopConfig: Configuration = {
+  def useHadoopConfig(configFile: File) = {
 
     // Build a config from the Application context values
-    val conf = new Configuration()
+    val hadoopContext = ConfigFactory.parseFile(configFile);
+    _conf = new Configuration()
 
     // Base Hadoop configuration options
     val nameNodeDir = "dfs.namenode.name.dir"
@@ -50,13 +58,10 @@ object ApplicationContext {
     val tempDir = "hadoop.tmp.dir"
     val defaultFSName = "fs.default.name"
 
-    conf.set(nameNodeDir, _context.getString(nameNodeDir))
-    conf.set(dataNodeDir, _context.getString(dataNodeDir))
-    conf.set(dfsReplication, _context.getString(dfsReplication))
-    conf.set(tempDir, _context.getString(tempDir))
-    conf.set(defaultFSName, _context.getString(defaultFSName))
-
-    conf
-
+    _conf.set(nameNodeDir, hadoopContext.getString(nameNodeDir))
+    _conf.set(dataNodeDir, hadoopContext.getString(dataNodeDir))
+    _conf.set(dfsReplication, hadoopContext.getString(dfsReplication))
+    _conf.set(tempDir, hadoopContext.getString(tempDir))
+    _conf.set(defaultFSName, hadoopContext.getString(defaultFSName))
   }
 }

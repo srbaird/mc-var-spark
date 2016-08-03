@@ -25,11 +25,10 @@ import org.apache.spark.ml.regression.LinearRegressionModel
 class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
   private val appContext = ApplicationContext.getContext
-  
+
   val sc = ApplicationContext.sc
 
   // Locate data
-  lazy val hdfsLocation = appContext.getString("fs.default.name")
   lazy val modelsLocation = appContext.getString("instrumentModel.modelsLocation")
   lazy val modelSchemasLocation = appContext.getString("instrumentModel.modelSchemasLocation")
   //
@@ -41,9 +40,8 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
     // Use the Hadoop configuration from the Application Context rather than the Spark default
     val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
-    
-    
-//    println(s"Look for models in '${modelsLocation}'")
+
+    //    println(s"Look for models in '${modelsLocation}'")
     val p = new Path(modelsLocation)
 
     val files = fs.listLocatedStatus(p)
@@ -53,7 +51,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
       val f = files.next().getPath.getName
       val dsCode = FilenameUtils.removeExtension(f)
-      
+
       if (isLoadable(dsCode, fs)) {
         found = found :+ dsCode
       }
@@ -125,11 +123,11 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
     try {
       val modelPath = s"${modelsLocation}${dsCode}"
-      fs.delete(new Path(modelPath), true)      // Recursive delete as it is a directory
+      fs.delete(new Path(modelPath), true) // Recursive delete as it is a directory
     } catch {
       case otherException: Throwable => // Defer exceptions
     }
-    
+
     // Ensure the model has been removed
     assert(!isLoadable(dsCode, fs))
   }
@@ -204,6 +202,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   // Create a hdfs path to a the model
   //
   private def createModelPath(dsCode: String): String = {
+    val hdfsLocation = ApplicationContext.getHadoopConfig.get("fs.default.name")
     s"${hdfsLocation}${modelsLocation}${dsCode}"
   }
 

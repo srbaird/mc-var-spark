@@ -28,7 +28,6 @@ class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentP
   val sc = ApplicationContext.sc
 
   // Locate data
-  lazy val hdfsLocation = appContext.getString("fs.default.name")
   lazy val fileLocation = appContext.getString("instrumentPrice.fileLocation")
   lazy val priceFileType = appContext.getString("instrumentPrice.priceFileType")
   lazy val keyColumn = appContext.getString("instrumentPrice.keyColumn")
@@ -49,6 +48,7 @@ class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentP
 
     // Use the DataBricks implementation
     val csvReadFormat = "com.databricks.spark.csv"
+    val hdfsLocation = ApplicationContext.getHadoopConfig.get("fs.default.name")
     val fileURI = s"${hdfsLocation}${fileLocation}${dsCode}${priceFileType}"
 
     logger.debug(s"Load price file from '${fileURI}'")

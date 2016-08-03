@@ -16,7 +16,7 @@ import main.scala.models.InstrumentModelGenerator
 import main.scala.predict.PredictionPersistor
 import main.scala.predict.ValueGenerator
 
-object GenerateObservations  extends StandardArguments{
+object GenerateObservations extends StandardArguments {
 
   def main(args: Array[String]) {
 

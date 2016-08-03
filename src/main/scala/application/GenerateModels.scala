@@ -50,7 +50,7 @@ object GenerateModels {
     ApplicationContext.sc(sc)
 
     // Get an instance of a model generator
-    val generatorBeanName = ApplicationContext.getContext.getString("springFramework.instrumentModelGenerator")
+    val generatorBeanName = ApplicationContext.getContext.getString("springFramework.instrumentModelGeneratorBeanName")
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[InstrumentModelGenerator]
 
     // Build parameters
@@ -58,7 +58,5 @@ object GenerateModels {
     val fromDate = LocalDate.of(2015, 6, 1)
     val toDate = LocalDate.of(2016, 5, 31)
     val result = generator.buildModel(fromDate, toDate, modelsDSCode)
-
-    sc.stop()
   }
 }
