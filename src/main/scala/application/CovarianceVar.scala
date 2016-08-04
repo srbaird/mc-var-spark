@@ -12,8 +12,13 @@ import java.io.File
 import org.springframework.core.io.UrlResource
 import java.net.URL
 import main.scala.predict.ValueGenerator
+import com.typesafe.config.ConfigFactory
+import java.io.InputStreamReader
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
+import org.springframework.core.io.InputStreamResource
 
-object CovarianceVar extends StandardArguments {
+object CovarianceVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
   def main(args: Array[String]) {
 
@@ -22,30 +27,28 @@ object CovarianceVar extends StandardArguments {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
-    println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
-
-    // TODO: Identify and process passed arguments
     run(args)
     println("Completed run")
   }
 
+  //
+  // Expected arguments are: application context file name, portfolio code, at-date in YYYY-MM-DD format
+  //
   private def run(args: Array[String]) = {
 
-    val validArgs = validateArgs(args)
+    if (args.length < 3) {
+      throw new IllegalArgumentException(s"Expected 3 arguments, got ${args.length}")
+    }
 
-    val spark = SparkSession.builder().getOrCreate()
- 
-    ApplicationContext.useConfigFile(new File(validArgs._1))
+    // Load the Config from first argument
+    ApplicationContext.useConfigFile(loadConfig(args(0)))
 
+    // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
-
-    // Generate the application context
-    val ctx = new GenericApplicationContext();
-    val xmlReader = new XmlBeanDefinitionReader(ctx);
-    xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springApplicationContextFileName)));
-    ctx.refresh();
+    val ctx = loadContext(springApplicationContextFileName)
 
     // Get the Spark Context
+    val spark = SparkSession.builder().getOrCreate()
     val sc = spark.sparkContext
     ApplicationContext.sc(sc)
 
@@ -54,8 +57,8 @@ object CovarianceVar extends StandardArguments {
     val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameters to evaluate a portolio at a given date
-    val portfolioName = validArgs._2
-    val valueAtDate = validArgs._3
+    val portfolioName = args(1)
+    val valueAtDate = LocalDate.parse(args(2))
 
     // Get an instance of a prediction persistor
     val prediction = predictor.value(portfolioName, valueAtDate)

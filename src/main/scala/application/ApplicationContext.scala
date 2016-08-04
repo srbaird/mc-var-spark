@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory
 import java.io.FileNotFoundException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
+import java.io.Reader
 
 /**
  *
@@ -35,7 +36,10 @@ object ApplicationContext {
       _conf
     }
   }
-
+  def useConfigFile(config: Config): Config = {
+    _context = config; 
+    getContext
+  }
   def useConfigFile(configFile: File): Config = {
 
     if (configFile == null) throw new NullPointerException("Supplied config file was null")

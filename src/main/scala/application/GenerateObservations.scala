@@ -16,7 +16,7 @@ import main.scala.models.InstrumentModelGenerator
 import main.scala.predict.PredictionPersistor
 import main.scala.predict.ValueGenerator
 
-object GenerateObservations extends StandardArguments {
+object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
 
   def main(args: Array[String]) {
 
@@ -33,21 +33,19 @@ object GenerateObservations extends StandardArguments {
 
   private def run(args: Array[String]) = {
 
-    val validArgs = validateArgs(args)
+    if (args.length < 3) {
+      throw new IllegalArgumentException(s"Expected 3 arguments, got ${args.length}")
+    }
 
-    val spark = SparkSession.builder().getOrCreate()
+    // Load the Config from first argument
+    ApplicationContext.useConfigFile(loadConfig(args(0)))
 
-    ApplicationContext.useConfigFile(new File(validArgs._1))
-
+    // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
-
-    // Generate the application context
-    val ctx = new GenericApplicationContext();
-    val xmlReader = new XmlBeanDefinitionReader(ctx);
-    xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springApplicationContextFileName)));
-    ctx.refresh();
+    val ctx = loadContext(springApplicationContextFileName)
 
     // Get the Spark Context
+    val spark = SparkSession.builder().getOrCreate()
     val sc = spark.sparkContext
     ApplicationContext.sc(sc)
 
@@ -56,8 +54,8 @@ object GenerateObservations extends StandardArguments {
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameter to evaluate a portolio at a given date
-    val portfolioName = validArgs._2
-    val valueAtDate = validArgs._3
+    val portfolioName = args(1)
+    val valueAtDate = LocalDate.parse(args(2))
 
     // Get an instance of a prediction persistor
     val observation = generator.value(portfolioName, valueAtDate)

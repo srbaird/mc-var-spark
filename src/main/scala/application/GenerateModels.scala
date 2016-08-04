@@ -14,7 +14,7 @@ import main.scala.models.InstrumentModelGenerator
 import java.time.LocalDate
 import org.apache.spark.sql.SparkSession
 
-object GenerateModels {
+object GenerateModels extends ConfigFromHDFS with SpringContextFromHDFS {
 
   def main(args: Array[String]) {
 
@@ -25,27 +25,25 @@ object GenerateModels {
 
     println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
 
-    // TODO: Identify and process passed arguments
-    run
+    run(args)
     println("Completed run")
   }
 
-  private def run = {
+  private def run(args: Array[String]) = {
 
-    val spark = SparkSession.builder().getOrCreate()
+    if (args.length < 4) {
+      throw new IllegalArgumentException(s"Expected 4 arguments, got ${args.length}")
+    }
 
-    val applicationContextFileName = "/home/user0001/Desktop/Birkbeck/Project/1.0.0/configuration/applicationContext"
-    ApplicationContext.useConfigFile(new File(applicationContextFileName))
+    // Load the Config from first argument
+    ApplicationContext.useConfigFile(loadConfig(args(0)))
 
+    // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
-
-    // Generate the application context
-    val ctx = new GenericApplicationContext();
-    val xmlReader = new XmlBeanDefinitionReader(ctx);
-    xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springApplicationContextFileName)));
-    ctx.refresh();
+    val ctx = loadContext(springApplicationContextFileName)
 
     // Get the Spark Context
+    val spark = SparkSession.builder().getOrCreate()
     val sc = spark.sparkContext
     ApplicationContext.sc(sc)
 
@@ -54,9 +52,9 @@ object GenerateModels {
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[InstrumentModelGenerator]
 
     // Build parameters
-    val modelsDSCode = "WIKI_CMC"
-    val fromDate = LocalDate.of(2015, 6, 1)
-    val toDate = LocalDate.of(2016, 5, 31)
+    val modelsDSCode = args(1)
+    val fromDate = LocalDate.parse(args(2))
+    val toDate = LocalDate.parse(args(3))
     val result = generator.buildModel(fromDate, toDate, modelsDSCode)
   }
 }
