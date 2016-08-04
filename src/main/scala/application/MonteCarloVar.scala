@@ -24,6 +24,11 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
+    // Get the Spark Context
+    val spark = SparkSession.builder().getOrCreate()
+    val sc = spark.sparkContext
+    ApplicationContext.sc(sc)
+
     println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
 
     // TODO: Identify and process passed arguments
@@ -43,11 +48,6 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
     val ctx = loadContext(springApplicationContextFileName)
-
-    // Get the Spark Context
-    val spark = SparkSession.builder().getOrCreate()
-    val sc = spark.sparkContext
-    ApplicationContext.sc(sc)
 
     // Get an instance of a value predictor
     val predictorBeanName = ApplicationContext.getContext.getString("springFramework.predictorBeanName")

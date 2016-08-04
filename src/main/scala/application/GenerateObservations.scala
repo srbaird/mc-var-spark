@@ -25,7 +25,13 @@ object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
+    // Get the Spark Context
+    val spark = SparkSession.builder().getOrCreate()
+    val sc = spark.sparkContext
+    ApplicationContext.sc(sc)
+
     println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
+    println(s"HDFS location: ${ApplicationContext.getHadoopConfig.get("fs.default.name")}")
 
     run(args)
     println("Completed run")
@@ -43,11 +49,6 @@ object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
     // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
     val ctx = loadContext(springApplicationContextFileName)
-
-    // Get the Spark Context
-    val spark = SparkSession.builder().getOrCreate()
-    val sc = spark.sparkContext
-    ApplicationContext.sc(sc)
 
     // Get an instance of a model generator
     val generatorBeanName = ApplicationContext.getContext.getString("springFramework.observationGeneratorBeanName")

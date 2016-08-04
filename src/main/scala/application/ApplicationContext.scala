@@ -37,7 +37,7 @@ object ApplicationContext {
     }
   }
   def useConfigFile(config: Config): Config = {
-    _context = config; 
+    _context = config;
     getContext
   }
   def useConfigFile(configFile: File): Config = {
