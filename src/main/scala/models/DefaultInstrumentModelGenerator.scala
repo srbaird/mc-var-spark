@@ -21,6 +21,7 @@ import java.time.LocalDate
 import org.apache.spark.mllib.evaluation.RegressionMetrics
 import main.scala.util.Functions._
 import org.apache.spark.mllib.regression.LinearRegressionWithSGD
+import org.apache.log4j.Logger
 
 /**
  * For want of a better name, the default model generator for data sets
@@ -37,10 +38,14 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   private val noPricesMsg = "No price data found"
 
   val modelLabelColumn = "label"
-  
+
   private val appContext = ApplicationContext.getContext
 
   val sc = ApplicationContext.sc
+  //
+  //
+  //
+  private val logger = Logger.getLogger(getClass)
 
   def hasSources: Boolean = {
 
@@ -49,6 +54,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
   override def buildModel(from: LocalDate, to: LocalDate, dsCodes: Seq[String]): Map[String, (Boolean, String)] = {
 
+    logger.debug(s"Build model for ${dsCodes.length} codes between ${from} and ${to}")
     val emptyString = ""
     if (dsCodes == null || dsCodes.isEmpty || dsCodes.contains(emptyString) || dsCodes.contains(null)) {
       throw new IllegalArgumentException(s"Invalid dsCode supplied ${}")
@@ -66,9 +72,10 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
       throw new IllegalStateException(s"All dependencies have not been set")
     }
 
-    // Load the risk factor data.  If not data reject all dsCodes
+    // Load the risk factor data.  If no data reject all dsCodes
     val factorsDF = f.factors()
     if (factorsDF.count == 0) {
+      logger.trace(s"No risk factors found ")
       return dsCodes.foldLeft(Map[String, (Boolean, String)]()) { (map, dsCode) => map + (dsCode -> (false, noFactorsMsg)) }
     }
 
@@ -90,6 +97,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
    */
   def transform(d: DataFrame): DataFrame = {
 
+    logger.trace(s"Perform transform on ${d} ")
     if (t.isEmpty) {
       d
     } else {
@@ -103,6 +111,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   //
   private def buildModelForDSCode(dsCode: String, from: LocalDate, to: LocalDate): (Boolean, String) = {
 
+    logger.trace(s"Build model for '${dsCode}' between ${from} and ${to} ")
     def getPrices: DataFrame = {
 
       if (to == null && from == null) {
@@ -155,9 +164,10 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   //
   private def fitModelToTrainingData(dsCode: String, trainDF: DataFrame): (Boolean, String) = {
 
+    logger.trace(s"Fit model for '${dsCode}' ")
     // get the estimator
     try {
-      val e = getModelEstimator(dsCode, trainDF)
+      val e = getModelEstimator(trainDF)
       // rename the training dataframe column
       val regressionDF = trainDF.withColumnRenamed(getlabelColumn, modelLabelColumn)
       // fit the data
@@ -176,8 +186,9 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   //
   //  Returns a CrossValidator as an estimator
   //
-  private def getModelEstimator(dsCode: String, trainDF: DataFrame): Estimator[_] = {
+  private def getModelEstimator(trainDF: DataFrame): Estimator[_] = {
 
+    logger.trace(s"Create a Cross Validator estimator ")
 
     val assembler = new VectorAssembler()
       .setInputCols(trainDF.columns.diff(Array[String](getkeyColumn, getlabelColumn))) // Remove label column and date
@@ -204,10 +215,12 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   //
   private def tryLinearRegressionOnly(trainDF: DataFrame): Model[_] = {
 
+    logger.trace(s"Create a Linear Regression estimator ")
+
     val assembler = new VectorAssembler()
       .setInputCols(trainDF.columns.diff(Array[String](modelLabelColumn, getlabelColumn, getkeyColumn))) // Remove label column and date
       .setOutputCol("features")
-    
+
     val lir = new LinearRegression()
       .setFeaturesCol("features")
       .setLabelCol(modelLabelColumn)
@@ -227,8 +240,8 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
     println(s"Summary. MSE: ${summary.meanSquaredError} r-squared: ${summary.r2}")
 
-//    val result = lirModel.transform(training).select("label", "prediction")
-//    result.show()
+    //    val result = lirModel.transform(training).select("label", "prediction")
+    //    result.show()
     lirModel
 
   }
@@ -238,6 +251,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
   //
   private def persistTheModel(dsCode: String, model: Any): (Boolean, String) = {
 
+    logger.trace(s"Persist ${model} for '${dsCode}' ")
     try {
       m.putModel(dsCode, model.asInstanceOf[Model[_]])
     } catch {
@@ -248,11 +262,12 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
   private def generateMetadata(dsCode: String, df: DataFrame, model: Model[_]) {
 
+    logger.trace(s"Generate metadata from ${df} for '${dsCode}' ")
     val result = model.transform(df).select("label", "prediction")
     result.show()
     val resultAsArray = dfToArrayMatrix(df).map { row => (row(0), row(1)) }
     val metrics = new RegressionMetrics(sc.parallelize(resultAsArray))
-    println(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
+    logger.info(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
   }
 
   //

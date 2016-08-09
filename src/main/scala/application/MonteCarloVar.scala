@@ -17,6 +17,9 @@ import main.scala.predict.ValueGenerator
 
 object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
+  //
+  private val logger = Logger.getLogger(getClass)
+
   def main(args: Array[String]) {
 
     // TODO: Implement logging correctly
@@ -29,11 +32,8 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     val sc = spark.sparkContext
     ApplicationContext.sc(sc)
 
-    println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
-
     // TODO: Identify and process passed arguments
     run(args)
-    println("Completed run")
   }
 
   private def run(args: Array[String]) = {
@@ -44,6 +44,10 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
     // Load the Config from first argument
     ApplicationContext.useConfigFile(loadConfig(args(0)))
+    val portfolioName = args(1)
+    val valueAtDate = LocalDate.parse(args(2))
+
+    logger.info(s"Perform h-day MCS VaR for '${portfolioName}' at ${valueAtDate} using context file: '${args(0)}'")
 
     // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
@@ -51,29 +55,30 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
     // Get an instance of a value predictor
     val predictorBeanName = ApplicationContext.getContext.getString("springFramework.predictorBeanName")
+    logger.debug(s"Predictor bean name is '${predictorBeanName}'")
     val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
-
-    // Use parameter to evaluate a portolio at a given date
-    val portfolioName = args(1)
-    val valueAtDate = LocalDate.parse(args(2))
 
     // Get an instance of a prediction persistor
     val prediction = predictor.value(portfolioName, valueAtDate)
 
     // Write percentile values
-    val instanceBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
-    val writer = ctx.getBean(instanceBeanName).asInstanceOf[PredictionPersistor]
+    val persistorBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
+    logger.debug(s"Persistor bean name is '${persistorBeanName}'")
+    val writer = ctx.getBean(persistorBeanName).asInstanceOf[PredictionPersistor]
 
     // 
     val predictionRange = prediction.map(p => p._1)
 
     val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
     val percentile95 = getPercentile(95, predictionRange)
+    logger.info(s"Write 95% probability value of ${percentile95}")
     writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, percentile95)
 
     val percentile99 = getPercentile(99, predictionRange)
+    logger.info(s"Write 99% probability value of ${percentile99}")
     writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, percentile99)
 
+        logger.info("Completed h-day MCS VaR run")
   }
   private def getPercentile(percentile: Double, range: Array[Double]): Double = {
 

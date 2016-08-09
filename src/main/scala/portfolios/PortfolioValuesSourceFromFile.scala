@@ -18,7 +18,7 @@ import org.apache.spark.sql.types.DataTypes
 import main.scala.application.ApplicationContext
 import main.scala.transform.Transformable
 
-class PortfolioValuesSourceFromFile(val t: Seq[Transformer]) extends PortfolioValuesSource[DataFrame] with Transformable {
+class PortfolioValuesSourceFromFile(val t: Seq[Transformer]) extends PortfolioValuesSource[DataFrame] {
 
   // Ensure a non-null sequence of transformers 
   def this() = this(Array[Transformer]())
@@ -29,7 +29,6 @@ class PortfolioValuesSourceFromFile(val t: Seq[Transformer]) extends PortfolioVa
   //
   // Context variables to locate the data
   //
-  //  lazy val hdfsLocation = appContext.getString("fs.default.name")
   lazy val fileLocation = appContext.getString("portfolioHolding.fileLocation")
   lazy val portfolioFileType = appContext.getString("portfolioHolding.portfolioFileType")
   lazy val keyColumn = appContext.getString("portfolioHolding.keyColumn")
@@ -37,13 +36,12 @@ class PortfolioValuesSourceFromFile(val t: Seq[Transformer]) extends PortfolioVa
   lazy val instrumentColumn = appContext.getString("portfolioHolding.instrumentColumn")
   //
   private val logger = Logger.getLogger(getClass)
-  //
-  // For the implementation of Transformable
-  //
-  private var transformers = Vector[Transformer]()
+
 
   override def getAvailableCodes(): Seq[String] = {
-
+    
+    logger.debug(s"Get available portfolio codes ")
+    
     // Use the Hadoop configuration from the Application Context rather than the Spark default
     val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
 
@@ -62,6 +60,8 @@ class PortfolioValuesSourceFromFile(val t: Seq[Transformer]) extends PortfolioVa
 
   override def getHoldings(portfolioCode: String, at: LocalDate): DataFrame = {
 
+    logger.debug(s"Get the holdings for ${portfolioCode} at ${at} ")
+    
     if (portfolioCode == null || portfolioCode.isEmpty()) {
       throw new IllegalArgumentException(s"An invalid portfolio code was supplied: ${portfolioCode}")
     }
@@ -98,23 +98,15 @@ class PortfolioValuesSourceFromFile(val t: Seq[Transformer]) extends PortfolioVa
     transform(df.join(dfJoin, dfJoin.columns)) // Join the dataset to the temp table 
   }
 
-  /**
-   * Add a Transformer to the sequence
-   */
-  override def add(t: Transformer): Unit = {
 
-    // don't allow a null value to be added
-    if (t == null) {
-      throw new IllegalArgumentException(s"Cannot add a null value")
-    }
-    transformers = transformers :+ t
-  }
 
   /**
    * Apply available transformers in sequence
    */
-  override def transform(d: DataFrame): DataFrame = {
+  def transform(d: DataFrame): DataFrame = {
 
+    logger.trace(s"perform transformation on ${d} ")
+    
     if (t.isEmpty) {
       d
     } else {

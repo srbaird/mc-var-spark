@@ -8,11 +8,16 @@ import com.typesafe.config.Config
 import breeze.macros.expand.args
 import org.apache.hadoop.fs.Path
 import breeze.macros.expand.args
+import org.apache.log4j.Logger
 
 trait ConfigFromHDFS {
 
+  //
+  private val logger = Logger.getLogger(this.getClass)
+
   def loadConfig(location: String): Config = {
 
+    logger.trace(s"Load a config from '${location}'")
     val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
     try {
 

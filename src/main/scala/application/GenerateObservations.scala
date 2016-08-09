@@ -18,6 +18,9 @@ import main.scala.predict.ValueGenerator
 
 object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
 
+  //
+  private val logger = Logger.getLogger(getClass)
+
   def main(args: Array[String]) {
 
     // TODO: Implement logging correctly
@@ -30,11 +33,7 @@ object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
     val sc = spark.sparkContext
     ApplicationContext.sc(sc)
 
-    println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
-    println(s"HDFS location: ${ApplicationContext.getHadoopConfig.get("fs.default.name")}")
-
     run(args)
-    println("Completed run")
   }
 
   private def run(args: Array[String]) = {
@@ -45,31 +44,37 @@ object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
 
     // Load the Config from first argument
     ApplicationContext.useConfigFile(loadConfig(args(0)))
+    val portfolioName = args(1)
+    val valueAtDate = LocalDate.parse(args(2))
+
+    logger.info(s"Perform covariance VaR for '${portfolioName}' at ${valueAtDate} using context file: '${args(0)}'")
 
     // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
     val ctx = loadContext(springApplicationContextFileName)
 
-    // Get an instance of a model generator
+    // Get an instance of a observation generator
     val generatorBeanName = ApplicationContext.getContext.getString("springFramework.observationGeneratorBeanName")
+    logger.debug(s"Generator bean name is '${generatorBeanName}'")
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[ValueGenerator]
 
     // Use parameter to evaluate a portolio at a given date
-    val portfolioName = args(1)
-    val valueAtDate = LocalDate.parse(args(2))
 
     // Get an instance of a prediction persistor
     val observation = generator.value(portfolioName, valueAtDate)
 
     // Write percentile values
-    val instanceBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
-    val writer = ctx.getBean(instanceBeanName).asInstanceOf[PredictionPersistor]
+    val persistorBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
+    logger.debug(s"Persistor bean name is '${persistorBeanName}'")
+    val writer = ctx.getBean(persistorBeanName).asInstanceOf[PredictionPersistor]
 
     // Result is a single row
     val result = observation(0)._1
 
     val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
-
+    logger.info(s"Write observation value of ${hValue}")
     writer.persist(portfolioName, valueAtDate, generator.getClass.getSimpleName, hValue, 0, result)
+
+    logger.info("Completed observation generation")
   }
 }

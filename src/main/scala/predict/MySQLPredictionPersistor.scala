@@ -6,8 +6,8 @@ import main.scala.application.ApplicationContext
 import java.time.LocalDate
 import java.time.ZoneId
 import java.sql.Date
-
 import scala.slick.driver.MySQLDriver.simple._
+import org.apache.log4j.Logger
 
 class MySQLPredictionPersistor extends PredictionPersistor {
 
@@ -24,12 +24,16 @@ class MySQLPredictionPersistor extends PredictionPersistor {
 
   // The query interface for the Predictions table
   val predictions: TableQuery[Predictions] = TableQuery[Predictions]
-
+  //
+  //
+  //
+  private val logger = Logger.getLogger(getClass)
   /**
    *
    */
   def persist(portfolioCode: String, at: LocalDate, eClass: String, hValue: Double, pValue: Double, valuation: Double) = {
 
+    logger.info(s"Persist: portfolio code: '${portfolioCode}', value date: ${at}, estimator class: '{eClass}', h-value: ${hValue}, p-value: ${pValue}, value: ${valuation}")
     if (portfolioCode == null || portfolioCode.isEmpty()) {
       throw new IllegalArgumentException("An invalid portfolio code was supplied: ${portfolioCode}")
     }
@@ -41,7 +45,6 @@ class MySQLPredictionPersistor extends PredictionPersistor {
     if (eClass == null || eClass.isEmpty()) {
       throw new IllegalArgumentException("An invalid estimator class was supplied: ${eClass}")
     }
-
 
     Database.forURL(dbUrl, driver = dbDriver, user = dbUser, password = dbPassword) withSession { implicit session =>
 

@@ -16,6 +16,9 @@ import org.apache.spark.sql.SparkSession
 
 object GenerateModels extends ConfigFromHDFS with SpringContextFromHDFS {
 
+  //
+  private val logger = Logger.getLogger(getClass)
+
   def main(args: Array[String]) {
 
     // TODO: Implement logging correctly
@@ -27,11 +30,8 @@ object GenerateModels extends ConfigFromHDFS with SpringContextFromHDFS {
     val spark = SparkSession.builder().getOrCreate()
     val sc = spark.sparkContext
     ApplicationContext.sc(sc)
-    
-    println(s"Invoked ${getClass.getSimpleName} with '${args.mkString(", ")}'")
 
     run(args)
-    println("Completed run")
   }
 
   private def run(args: Array[String]) = {
@@ -42,6 +42,12 @@ object GenerateModels extends ConfigFromHDFS with SpringContextFromHDFS {
 
     // Load the Config from first argument
     ApplicationContext.useConfigFile(loadConfig(args(0)))
+    // Build parameters
+    val modelsDSCode = args(1)
+    val fromDate = LocalDate.parse(args(2))
+    val toDate = LocalDate.parse(args(3))
+
+    logger.info(s"Generate model for '${modelsDSCode}' between ${fromDate} and ${toDate} using context file: '${args(0)}'")
 
     // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
@@ -49,12 +55,12 @@ object GenerateModels extends ConfigFromHDFS with SpringContextFromHDFS {
 
     // Get an instance of a model generator
     val generatorBeanName = ApplicationContext.getContext.getString("springFramework.instrumentModelGeneratorBeanName")
+    logger.debug(s"Model Generator bean name is '${generatorBeanName}'")
     val generator = ctx.getBean(generatorBeanName).asInstanceOf[InstrumentModelGenerator]
 
-    // Build parameters
-    val modelsDSCode = args(1)
-    val fromDate = LocalDate.parse(args(2))
-    val toDate = LocalDate.parse(args(3))
     val result = generator.buildModel(fromDate, toDate, modelsDSCode)
+
+    val successMsg = if(result(modelsDSCode)._1) "successful" else "NOT successful"
+    logger.info("Generate model was ${successMsg}")
   }
 }

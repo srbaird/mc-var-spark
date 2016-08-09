@@ -15,6 +15,7 @@ import main.scala.application.ApplicationContext
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
 import main.scala.util.Functions._
+import org.apache.log4j.Logger
 
 /**
  * Implementation of the Transformer pattern to reduce a factors data frame to
@@ -32,12 +33,18 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
   //
   //
   lazy val hDayValue = appContext.getString("hDayVolatility.hDayValue").toInt
+  //
+  //
+  //
+  private val logger = Logger.getLogger(getClass)
 
   /**
    * Take the DataFrame and return an h-day volatility data frame. The h-value is retrieved from the
    * application context as 'hDayVolatility.hDayValue'
    */
   override def transform(df: Dataset[_]): DataFrame = {
+
+    logger.trace(s"Transform data set: ${df}")
 
     if (df == null) {
       throw new IllegalArgumentException(s"Invalid data frame supplied: ${df}")
@@ -74,6 +81,8 @@ class HDayVolatilityTransformer(override val uid: String) extends Transformer {
    */
   override def transformSchema(schema: StructType): StructType = {
 
+    logger.trace(s"Transform schema: ${schema}")
+    
     if (schema == null) {
       throw new IllegalArgumentException(s"Invalid schema supplied: ${schema}")
     }

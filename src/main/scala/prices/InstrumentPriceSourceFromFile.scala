@@ -18,7 +18,7 @@ import org.apache.spark.sql.SQLContext
 /**
  * File backed implementation of InstrumentPriceSource which generates date-price pairs as a DataFrame
  */
-class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentPriceSource[DataFrame] with Transformable {
+class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentPriceSource[DataFrame] {
 
   // Ensure a non-null sequence of transformers 
   def this() = this(Array[Transformer]())
@@ -33,15 +33,16 @@ class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentP
   lazy val keyColumn = appContext.getString("instrumentPrice.keyColumn")
   lazy val valueColumn = appContext.getString("instrumentPrice.valueColumn")
   //
-  private val logger = Logger.getLogger(RiskFactorSourceFromFile.getClass)
-  // TODO: remove this
-  private var transformers = Vector[Transformer]()
+  //
+  //
+  private val logger = Logger.getLogger(getClass)
   //
   /**
    * Supplies all available prices for a given instrument code
    */
   override def getPrices(dsCode: String): DataFrame = {
 
+    logger.debug(s"Get prices for '${dsCode}'")
     if (dsCode == null || dsCode.isEmpty) {
       throw new IllegalArgumentException(s"An invalid dataset code date was supplied: ${dsCode}")
     }
@@ -68,6 +69,8 @@ class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentP
    * Supplies all available prices for a given instrument code between two dates
    */
   override def getPrices(dsCode: String, from: LocalDate, to: LocalDate): DataFrame = {
+
+    logger.debug(s"Get prices for '${dsCode}' between ${from} and ${to}")
 
     if (dsCode == null || dsCode.isEmpty) {
       throw new IllegalArgumentException(s"An invalid dataset code date was supplied: ${dsCode}")
@@ -99,6 +102,8 @@ class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentP
    */
   def getAvailableCodes(): Seq[String] = {
 
+    logger.debug(s"Get all available price codes")
+
     // Use the Hadoop configuration from the Application Context rather than the Spark default
     val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
 
@@ -116,21 +121,11 @@ class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentP
   }
 
   /**
-   * Add a Transformer to the sequence
-   */
-  override def add(t: Transformer): Unit = {
-
-    // don't allow a null value to be added
-    if (t == null) {
-      throw new IllegalArgumentException(s"Cannot add a null value")
-    }
-    transformers = transformers :+ t
-  }
-
-  /**
    * Apply available transformers in sequence
    */
-  override def transform(d: DataFrame): DataFrame = {
+  def transform(d: DataFrame): DataFrame = {
+
+    logger.trace(s"Transform ${d}")
 
     if (t.isEmpty) {
       d
@@ -138,5 +133,4 @@ class InstrumentPriceSourceFromFile(val t: Seq[Transformer]) extends InstrumentP
       t.foldLeft(d)((acc, t) => t.transform(acc))
     }
   }
-
 }

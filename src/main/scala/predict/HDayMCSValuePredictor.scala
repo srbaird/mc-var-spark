@@ -19,6 +19,7 @@ import main.scala.transform.DoublesOnlyTransformer
 import main.scala.transform.HDayVolatilityTransformer
 import main.scala.util.Functions.dfToArrayMatrix
 import main.scala.util.Functions.toDouble
+import org.apache.log4j.Logger
 
 /**
  * Implement ValuePredictor to return a portfolio value using Monte Carlo simulation with h-day covariance matrix
@@ -36,7 +37,13 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
   lazy val priceValueColumn = appContext.getString("instrumentPrice.valueColumn")
   lazy val priceKeyColumn = appContext.getString("instrumentPrice.keyColumn")
-
+  //
+  //
+  //
+  private val logger = Logger.getLogger(getClass)
+  //
+  // TODO: Move this to the application context file
+  //
   private val indexColumn = "Index"
 
   /**
@@ -44,6 +51,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
    */
   override def value(pCode: String, at: LocalDate): Array[(Double, Array[(String, Double)])] = {
 
+    logger.debug(s"Generate a h-day mcs value for '${pCode}' at ${at}")
     if (pCode == null || pCode.isEmpty()) {
       throw new IllegalArgumentException(s"Invalid portfolio code supplied: ${pCode}")
     }
@@ -53,10 +61,12 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     }
 
     // Get a list of instruments with positions at the given date
+    logger.trace(s"Get the holdings for the portfolio")
     val holdings = p.getHoldings(pCode, at)
 
     // If no holdings at this date then nothing more to do 
     if (holdings.count() == 0) {
+      logger.trace(s"No holdings, return an empty array")
       return Array[(Double, Array[(String, Double)])]() // 
     }
 
@@ -78,11 +88,13 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     val from = to.minusYears(1)
     // TODO: remove this to a DI implementation
 
+    logger.trace(s"Transform the factors to an matrix of doubles")
     val correlationFactors = new HDayVolatilityTransformer().transform(
       new DoublesOnlyTransformer().transform(
         f.factors(from, to)))
     val correlationFactorsAsMatrix = dfToArrayMatrix(correlationFactors)
 
+    logger.trace(s"Generate ${mcsNumIterations} sets of factors")
     val correlatedSamples = c.sampleCorrelated(mcsNumIterations, correlationFactorsAsMatrix)
 
     // Add an index to ensure that the results can be correctly accumulated
@@ -93,12 +105,11 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
     val correlatedSamplesAsRDDOfRows = sc.parallelize(correlatedSamplesWithIndex.map { a => Row.fromSeq(a) })
     val correlatedSamplesAsDF = sqlc.createDataFrame(correlatedSamplesAsRDDOfRows, correlatedSamplesWithIndexSchema)
+    logger.info(s"Factor samples has ${correlatedSamplesAsRDDOfRows.partitions.size} partitions")
 
     val assembler = new VectorAssembler()
       .setInputCols(correlatedSamplesAsDF.columns.diff(Array[String](priceKeyColumn, indexColumn))) // Remove label column and date
       .setOutputCol("features")
-    //    println(s"Prediction vector length = ${assembler.getInputCols.length}")
-    //    println(assembler.getInputCols.mkString(", "))
     val featuresDF = assembler.transform(correlatedSamplesAsDF)
 
     // Map to co-ordinate the results
@@ -111,11 +122,8 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
       val dsCode = portfolioHolding._1 // to simplify 
       val holding = portfolioHolding._2 // the code
 
-      // TEMP TEMP
-      //      println(s"Model is a ${m.getModel(dsCode).get.getClass.getSimpleName}")
-      //      featuresDF.show()
-      //      m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn).show
-
+      logger.trace(s"Generate sample predictions for '${dsCode}'")
+      
       // Apply the model to the generated samples
       val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn))
 
@@ -136,5 +144,4 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     val indexEntry = if (map.contains(index)) map(index) else Array[(String, Double, Double)]()
     indexEntry :+ (dsCode, prediction, holding)
   }
-
 }

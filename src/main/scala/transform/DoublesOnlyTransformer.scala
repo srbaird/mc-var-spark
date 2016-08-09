@@ -8,6 +8,7 @@ import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.Dataset
+import org.apache.log4j.Logger
 
 /**
  * Remove all columns that are not of type Double
@@ -15,14 +16,19 @@ import org.apache.spark.sql.Dataset
 class DoublesOnlyTransformer(override val uid: String) extends Transformer {
 
   def this() = this(Identifiable.randomUID("dnlyt"))
+  //
+  //
+  //
+  private val logger = Logger.getLogger(getClass)
 
   override def copy(extra: ParamMap): Transformer = new ValueDateTransformer(uid) // Ignore the params for the time being
 
   /**
    * Select only the valid columns from the supplied data frame
    */
-  override def transform(df:Dataset[_]): DataFrame = {
+  override def transform(df: Dataset[_]): DataFrame = {
 
+    logger.trace(s"Transform data set: ${df}")
     if (df == null) {
       throw new IllegalArgumentException(s"Invalid data frame supplied: ${df}")
     }
@@ -41,11 +47,12 @@ class DoublesOnlyTransformer(override val uid: String) extends Transformer {
    */
   override def transformSchema(schema: StructType): StructType = {
 
+    logger.trace(s"Transform schema: ${schema}")
     if (schema == null) {
       throw new IllegalArgumentException(s"Invalid schema supplied: ${schema}")
     }
     val doubleDataType = DataTypes.DoubleType
     val integerDataType = DataTypes.IntegerType
-    StructType(schema.filter { s => s.dataType == doubleDataType || s.dataType == integerDataType})
+    StructType(schema.filter { s => s.dataType == doubleDataType || s.dataType == integerDataType })
   }
 }

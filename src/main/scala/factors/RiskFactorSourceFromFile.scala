@@ -5,9 +5,9 @@ import java.time.LocalDate
 import scala.Vector
 
 import org.apache.log4j.Logger
-import org.apache.spark.SparkContext
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.annotation.Experimental
+import org.apache.spark.annotation.Since
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
@@ -19,7 +19,7 @@ import main.scala.transform.Transformable
 /**
  * Provide risk factor matrix as a DataFrame from from csv file
  */
-case class RiskFactorSourceFromFile(val t: Array[Transformer]) extends RiskFactorSource[DataFrame] with Transformable {
+case class RiskFactorSourceFromFile(val t: Array[Transformer]) extends RiskFactorSource[DataFrame] {
 
   // Ensure a non-null sequence of transformers  
   def this() = this(Array[Transformer]())
@@ -29,15 +29,16 @@ case class RiskFactorSourceFromFile(val t: Array[Transformer]) extends RiskFacto
   val sc = ApplicationContext.sc
 
   // Locate data
-
   lazy val fileLocation = appContext.getString("riskFactor.fileLocation")
   lazy val factorsFileName = appContext.getString("riskFactor.factorsFileName")
   //
-  private val logger = Logger.getLogger(RiskFactorSourceFromFile.getClass)
+  //
+  //
+  private val logger = Logger.getLogger(getClass)
+  //
+  // TODO: Move this to the context file
   //
   private val sortColumn = "valueDate"
-  //
-  private var transformers = Vector[Transformer]()
   //
   private lazy val df = transform(readDataFrameFromFile)
 
@@ -45,6 +46,8 @@ case class RiskFactorSourceFromFile(val t: Array[Transformer]) extends RiskFacto
    * A positive non-zero number of rows must be supplied. The data is first sorted to ensure the most recent rows are returned
    */
   override def head(rows: Int): DataFrame = {
+
+    logger.debug(s"Get first ${rows} rows")
     if (rows < 1) {
       throw new IllegalArgumentException(s"The number of rows must be greater than zero: ${rows}")
     }
@@ -58,6 +61,7 @@ case class RiskFactorSourceFromFile(val t: Array[Transformer]) extends RiskFacto
    */
   override def factors(from: LocalDate, to: LocalDate = null): DataFrame = {
 
+    logger.debug(s"Get factors between ${from} and ${to}")
     if (from == null) {
       throw new IllegalArgumentException(s"An invalid start date was supplied: ${from}")
     }
@@ -79,14 +83,14 @@ case class RiskFactorSourceFromFile(val t: Array[Transformer]) extends RiskFacto
     }
   }
 
-  def readDataFrameFromFile: DataFrame = {
+  private def readDataFrameFromFile: DataFrame = {
 
     // Use the DataBricks implementation
     val csvReadFormat = "com.databricks.spark.csv"
     val hdfsLocation = ApplicationContext.getHadoopConfig.get("fs.default.name")
     val fileURI = s"${hdfsLocation}${fileLocation}${factorsFileName}"
 
-    logger.debug(s"Load dataframe from '${fileURI}'")
+    logger.trace(s"Load dataframe from '${fileURI}'")
 
     val sqlc = new SQLContext(sc)
 
@@ -98,17 +102,9 @@ case class RiskFactorSourceFromFile(val t: Array[Transformer]) extends RiskFacto
 
   }
 
-  override def add(t: Transformer): Unit = {
-
-    // don't allow a null value to be added
-    if (t == null) {
-      throw new IllegalArgumentException(s"Cannot add a null value")
-    }
-    transformers = transformers :+ t
-  }
-
-  override def transform(d: DataFrame): DataFrame = {
-
+  def transform(d: DataFrame): DataFrame = {
+    
+    logger.trace(s"Perform transform on ${d}")
     if (t.isEmpty) {
       d
     } else {

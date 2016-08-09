@@ -8,6 +8,7 @@ import org.apache.spark.sql.Dataset
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.types.StructField
+import org.apache.log4j.Logger
 
 /**
  * Implementation of the Transformer pattern to ensure that a data frame has a column as a Date type
@@ -19,6 +20,8 @@ class ValueDateTransformer(override val uid: String) extends Transformer {
   private var _columnName: String = "valueDate"
 
   def columnName = _columnName
+  //
+  private val logger = Logger.getLogger(getClass)
 
   /**
    * Set the name of the column to be transformed. The default value is "valueDate"
@@ -40,7 +43,7 @@ class ValueDateTransformer(override val uid: String) extends Transformer {
    */
   override def transform(df: Dataset[_]): DataFrame = {
 
-
+    logger.trace(s"Transform data set: ${df}")
     df.withColumn(s"${columnName}${tempColSuffix}", df(columnName).cast(DataTypes.DateType))
       .drop(columnName)
       .withColumnRenamed(s"${columnName}${tempColSuffix}", columnName)
@@ -51,6 +54,7 @@ class ValueDateTransformer(override val uid: String) extends Transformer {
    */
   override def transformSchema(schema: StructType): StructType = {
 
+    logger.trace(s"Transform schema: ${schema}")
     val stableIdentifier = _columnName
 
     StructType(schema.map { sf =>
