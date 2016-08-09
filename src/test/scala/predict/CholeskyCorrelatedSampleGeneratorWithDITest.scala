@@ -151,6 +151,11 @@ class CholeskyCorrelatedSampleGeneratorWithDITest extends DITestBase {
 
     private var index = -1
     override def nextDouble: Double = { index += 1; fixedRandoms(index % 3) }
+    override def randomMatrix(rows: Long, cols: Long): Array[Array[Double]] = {
+
+      (1L to rows).map(l => (1L to cols).map(i => nextDouble).toArray).toArray
+
+    }
 
   }
   //

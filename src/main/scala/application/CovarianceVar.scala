@@ -20,6 +20,9 @@ import org.springframework.core.io.InputStreamResource
 
 object CovarianceVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
+  //
+  private val logger = Logger.getLogger(getClass)
+
   def main(args: Array[String]) {
 
     // TODO: Implement logging correctly
@@ -33,7 +36,6 @@ object CovarianceVar extends ConfigFromHDFS with SpringContextFromHDFS {
     ApplicationContext.sc(sc)
 
     run(args)
-    println("Completed run")
   }
 
   //
@@ -47,6 +49,10 @@ object CovarianceVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
     // Load the Config from first argument
     ApplicationContext.useConfigFile(loadConfig(args(0)))
+    val portfolioName = args(1)
+    val valueAtDate = LocalDate.parse(args(2))
+
+    logger.info(s"Perform covariance VaR for '${portfolioName}' at ${valueAtDate} using context file: '${args(0)}'")
 
     // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
@@ -54,18 +60,16 @@ object CovarianceVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
     // Get an instance of a value predictor
     val predictorBeanName = ApplicationContext.getContext.getString("springFramework.covariancePredictorBeanName")
+    logger.debug(s"Predictor bean name is '${predictorBeanName}'")
     val predictor = ctx.getBean(predictorBeanName).asInstanceOf[ValueGenerator]
-
-    // Use parameters to evaluate a portolio at a given date
-    val portfolioName = args(1)
-    val valueAtDate = LocalDate.parse(args(2))
 
     // Get an instance of a prediction persistor
     val prediction = predictor.value(portfolioName, valueAtDate)
 
     // Write percentile values
-    val instanceBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
-    val writer = ctx.getBean(instanceBeanName).asInstanceOf[PredictionPersistor]
+    val persistorBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
+    logger.debug(s"Persistor bean name is '${persistorBeanName}'")
+    val writer = ctx.getBean(persistorBeanName).asInstanceOf[PredictionPersistor]
 
     // Result is a single row
     val result = prediction(0)._1
@@ -74,8 +78,14 @@ object CovarianceVar extends ConfigFromHDFS with SpringContextFromHDFS {
     val sigma95 = ApplicationContext.getContext.getDouble("predictions.sigma95")
     val sigma99 = ApplicationContext.getContext.getDouble("predictions.sigma99")
 
-    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, -1 * sigma95 * result)
+    val valueAt95PercentProbability = -1 * sigma95 * result
+    logger.info(s"Write 95% probability value of ${valueAt95PercentProbability}")
+    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, valueAt95PercentProbability)
 
-    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, -1 * sigma99 * result)
+    val valueAt99PercentProbability = -1 * sigma95 * result
+    logger.info(s"Write 99% probability value of ${valueAt99PercentProbability}")
+    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, valueAt99PercentProbability)
+    
+    logger.info("Completed covariance VaR run")
   }
 }

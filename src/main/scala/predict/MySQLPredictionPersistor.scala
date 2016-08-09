@@ -33,7 +33,7 @@ class MySQLPredictionPersistor extends PredictionPersistor {
    */
   def persist(portfolioCode: String, at: LocalDate, eClass: String, hValue: Double, pValue: Double, valuation: Double) = {
 
-    logger.info(s"Persist: portfolio code: '${portfolioCode}', value date: ${at}, estimator class: '{eClass}', h-value: ${hValue}, p-value: ${pValue}, value: ${valuation}")
+    logger.info(s"Persist: portfolio code: '${portfolioCode}', value date: ${at}, estimator class: '${eClass}', h-value: ${hValue}, p-value: ${pValue}, value: ${valuation}")
     if (portfolioCode == null || portfolioCode.isEmpty()) {
       throw new IllegalArgumentException("An invalid portfolio code was supplied: ${portfolioCode}")
     }

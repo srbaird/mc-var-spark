@@ -4,6 +4,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.CholeskyDecomposition
 import org.apache.commons.math3.stat.correlation.Covariance
 import org.apache.log4j.Logger
+import main.scala.application.ApplicationContext
 
 class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends CorrelatedSampleGenerator {
 
@@ -44,7 +45,10 @@ class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends Correlate
     // Generate n x numOfFactors matrix of random samples
     //
     logger.trace(s"Generate the observations")
-    val observations = (1L to n).map(l => (1 to numOfFactors).map(i => r.nextDouble).toArray).toArray
+    val observationRangeAsRDD = ApplicationContext.sc.parallelize(1L to n)
+    //    val observations = (1L to n).map(l => (1 to numOfFactors).map(i => r.nextDouble).toArray).toArray
+    //   val observations = observationRangeAsRDD.map { x => (1 to numOfFactors).map(i => r.nextDouble).toArray }.collect()
+    val observations = r.randomMatrix(n, numOfFactors.toLong)
     //
     // Convert to Matrix for multiplication
     //

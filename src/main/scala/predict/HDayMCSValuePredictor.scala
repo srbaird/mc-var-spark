@@ -95,7 +95,10 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     val correlationFactorsAsMatrix = dfToArrayMatrix(correlationFactors)
 
     logger.trace(s"Generate ${mcsNumIterations} sets of factors")
+    val sampleStartTime = System.currentTimeMillis
     val correlatedSamples = c.sampleCorrelated(mcsNumIterations, correlationFactorsAsMatrix)
+    val sampleEndTime = System.currentTimeMillis
+    logger.info(s"Generating ${mcsNumIterations} sets of factors took ${sampleEndTime-sampleStartTime}(ms)")
 
     // Add an index to ensure that the results can be correctly accumulated
     val correlatedSamplesWithIndex = correlatedSamples.zipWithIndex.map(s => s._1 :+ toDouble(s._2))
@@ -105,7 +108,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
     val correlatedSamplesAsRDDOfRows = sc.parallelize(correlatedSamplesWithIndex.map { a => Row.fromSeq(a) })
     val correlatedSamplesAsDF = sqlc.createDataFrame(correlatedSamplesAsRDDOfRows, correlatedSamplesWithIndexSchema)
-    logger.info(s"Factor samples has ${correlatedSamplesAsRDDOfRows.partitions.size} partitions")
+    logger.info(s"Factor samples has ${correlatedSamplesAsRDDOfRows.partitions.size} partitions to perform ${mcsNumIterations} iterations")
 
     val assembler = new VectorAssembler()
       .setInputCols(correlatedSamplesAsDF.columns.diff(Array[String](priceKeyColumn, indexColumn))) // Remove label column and date
@@ -123,7 +126,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
       val holding = portfolioHolding._2 // the code
 
       logger.trace(s"Generate sample predictions for '${dsCode}'")
-      
+
       // Apply the model to the generated samples
       val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn))
 
