@@ -234,7 +234,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
     val startTime = System.nanoTime()
     val lirModel = lir.fit(training)
     val elapsedTime = (System.nanoTime() - startTime) / 1e9
-    println(s"Training time: $elapsedTime seconds")
+    logger.debug(s"Training time: ${elapsedTime} seconds")
 
     val summary = lirModel.evaluate(training)
 

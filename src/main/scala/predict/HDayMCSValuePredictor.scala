@@ -1,7 +1,6 @@
 package main.scala.predict
 
 import java.time.LocalDate
-
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.DataFrame
@@ -10,7 +9,7 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-
+import org.apache.spark.sql.functions.broadcast
 import main.scala.application.ApplicationContext
 import main.scala.factors.RiskFactorSource
 import main.scala.models.InstrumentModelSource
@@ -20,17 +19,20 @@ import main.scala.transform.HDayVolatilityTransformer
 import main.scala.util.Functions.dfToArrayMatrix
 import main.scala.util.Functions.toDouble
 import org.apache.log4j.Logger
+import org.apache.spark.rdd.RDD
 
 /**
  * Implement ValuePredictor to return a portfolio value using Monte Carlo simulation with h-day covariance matrix
  */
-class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSource[DataFrame], c: CorrelatedSampleGenerator, m: InstrumentModelSource[Model[_]]) extends ValueGenerator {
+class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSource[DataFrame], c: CorrelatedSampleGenerator, m: InstrumentModelSource[Model[_]])
+    extends ValueGenerator {
 
   val appContext = ApplicationContext.getContext
 
   val sc = ApplicationContext.sc
 
-  lazy val mcsNumIterations = appContext.getLong("mcs.mcsNumIterations")
+//  lazy val mcsNumIterations = appContext.getLong("mcs.mcsNumIterations")
+  lazy val mcsNumIterations = 10L
   lazy val instrumentColumn = appContext.getString("portfolioHolding.instrumentColumn")
   lazy val valueColumn = appContext.getString("portfolioHolding.valueColumn")
   lazy val predictionColumn = appContext.getString("instrumentModel.predictionColumn")
@@ -86,8 +88,8 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     // Don't include observations for the given date
     val to = at.minusDays(1)
     val from = to.minusYears(1)
-    // TODO: remove this to a DI implementation
 
+    // TODO: remove this to a DI implementation
     logger.trace(s"Transform the factors to an matrix of doubles")
     val correlationFactors = new HDayVolatilityTransformer().transform(
       new DoublesOnlyTransformer().transform(
@@ -98,7 +100,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
     val sampleStartTime = System.currentTimeMillis
     val correlatedSamples = c.sampleCorrelated(mcsNumIterations, correlationFactorsAsMatrix)
     val sampleEndTime = System.currentTimeMillis
-    logger.info(s"Generating ${mcsNumIterations} sets of factors took ${sampleEndTime-sampleStartTime}(ms)")
+    logger.info(s"Generating ${mcsNumIterations} sets of factors took ${sampleEndTime - sampleStartTime}(ms)")
 
     // Add an index to ensure that the results can be correctly accumulated
     val correlatedSamplesWithIndex = correlatedSamples.zipWithIndex.map(s => s._1 :+ toDouble(s._2))
@@ -120,6 +122,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
 
     // For each instrument get the appropriate model and predict against the feature samples
     // Use a for loop initially to restrict the parallelism to the samples dimension
+
     for (portfolioHolding <- holdingsAsArray) {
 
       val dsCode = portfolioHolding._1 // to simplify 
@@ -128,8 +131,11 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
       logger.trace(s"Generate sample predictions for '${dsCode}'")
 
       // Apply the model to the generated samples
+      val predictionStartTime = System.currentTimeMillis()
       val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn))
-
+      val predictionEndTime = System.currentTimeMillis()
+      logger.info(s"Predicting '${dsCode} for ${mcsNumIterations}' iterations took ${predictionEndTime - predictionStartTime}(ms)")
+      
       // Accumulate the results by index
       accumulatedResults = predictions.map { p => p(1) -> addResultToMap(accumulatedResults, p, dsCode, holding) }(scala.collection.breakOut)
     }

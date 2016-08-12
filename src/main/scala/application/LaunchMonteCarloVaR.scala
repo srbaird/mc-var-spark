@@ -13,6 +13,7 @@ object LaunchMonteCarloVaR extends PreLoadHadoopConfig {
       .builder()
       .appName("H-Day MonteCarlo VaR")
       .master("local[3]")
+//      .master("local")
       .getOrCreate()
 
     load

@@ -4,7 +4,11 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.CholeskyDecomposition
 import org.apache.commons.math3.stat.correlation.Covariance
 import org.apache.log4j.Logger
-import main.scala.application.ApplicationContext
+import org.apache.spark.annotation.Since
+import org.apache.spark.mllib.linalg.DenseMatrix
+import org.apache.spark.mllib.linalg.MatrixUDT
+import org.apache.spark.sql.types.SQLUserDefinedType
+
 
 class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends CorrelatedSampleGenerator {
 
@@ -45,17 +49,16 @@ class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends Correlate
     // Generate n x numOfFactors matrix of random samples
     //
     logger.trace(s"Generate the observations")
-    val observationRangeAsRDD = ApplicationContext.sc.parallelize(1L to n)
-    //    val observations = (1L to n).map(l => (1 to numOfFactors).map(i => r.nextDouble).toArray).toArray
-    //   val observations = observationRangeAsRDD.map { x => (1 to numOfFactors).map(i => r.nextDouble).toArray }.collect()
-    val observations = r.randomMatrix(n, numOfFactors.toLong)
+    val observations = r.randomMatrix(n, numOfFactors.toLong)    
     //
     // Convert to Matrix for multiplication
     //
-    val observationsAsMAtrix = new Array2DRowRealMatrix(observations)
+    val observationsAsMatrix = new Array2DRowRealMatrix(observations)
     //
     // Multiply and return the resulting Array
     //
-    observationsAsMAtrix.multiply(decomposition).getData
+    val decompositionAsMatrix = new DenseMatrix(decomposition.getRowDimension, decomposition.getColumnDimension, decomposition.getData.flatten) 
+    
+    observationsAsMatrix.multiply(decomposition).getData
   }
 }

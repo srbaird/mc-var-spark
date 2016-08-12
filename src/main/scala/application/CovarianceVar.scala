@@ -82,7 +82,7 @@ object CovarianceVar extends ConfigFromHDFS with SpringContextFromHDFS {
     logger.info(s"Write 95% probability value of ${valueAt95PercentProbability}")
     writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, valueAt95PercentProbability)
 
-    val valueAt99PercentProbability = -1 * sigma95 * result
+    val valueAt99PercentProbability = -1 * sigma99 * result
     logger.info(s"Write 99% probability value of ${valueAt99PercentProbability}")
     writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, valueAt99PercentProbability)
     

@@ -47,7 +47,7 @@ object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
     val portfolioName = args(1)
     val valueAtDate = LocalDate.parse(args(2))
 
-    logger.info(s"Perform covariance VaR for '${portfolioName}' at ${valueAtDate} using context file: '${args(0)}'")
+    logger.info(s"Perform Observation generation for '${portfolioName}' at ${valueAtDate} using context file: '${args(0)}'")
 
     // Load the DI framework context from HDFS
     val springApplicationContextFileName = ApplicationContext.getContext.getString("springFramework.applicationContextFileName")
@@ -68,13 +68,17 @@ object GenerateObservations extends ConfigFromHDFS with SpringContextFromHDFS {
     logger.debug(s"Persistor bean name is '${persistorBeanName}'")
     val writer = ctx.getBean(persistorBeanName).asInstanceOf[PredictionPersistor]
 
-    // Result is a single row
-    val result = observation(0)._1
+    if (observation.size < 1) {
+      logger.info("No observations were generated")
+    } else {
 
-    val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
-    logger.info(s"Write observation value of ${hValue}")
-    writer.persist(portfolioName, valueAtDate, generator.getClass.getSimpleName, hValue, 0, result)
+      // Result is a single row
+      val result = observation(0)._1
 
+      val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
+      logger.info(s"Write observation value of ${hValue}")
+      writer.persist(portfolioName, valueAtDate, generator.getClass.getSimpleName, hValue, 0, result)
+    }
     logger.info("Completed observation generation")
   }
 }

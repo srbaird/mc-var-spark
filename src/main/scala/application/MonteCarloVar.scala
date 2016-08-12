@@ -63,6 +63,8 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     val prediction = predictor.value(portfolioName, valueAtDate)
     val predictionEndTime = System.currentTimeMillis()
 
+    val sortedPrediction = prediction.sortBy(f => f._1)
+ 
     // Write percentile values
     val persistorBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
     logger.debug(s"Persistor bean name is '${persistorBeanName}'")
@@ -80,7 +82,7 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     logger.info(s"Write 99% probability value of ${percentile99}")
     writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, percentile99)
 
-    logger.info("Completed h-day MCS VaR run. Prediction took ${predictionEndTime - predictionStartTime}(ms)")
+    logger.info(s"Completed h-day MCS VaR run. Prediction took ${predictionEndTime - predictionStartTime}(ms)")
   }
   private def getPercentile(percentile: Double, range: Array[Double]): Double = {
 
