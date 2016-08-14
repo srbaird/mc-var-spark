@@ -48,8 +48,9 @@
 	</bean>
 
 	<!-- Instrument Model Source From File -->
-	<bean id="defaultInstrumentModelSourceFromFile" class="main.scala.models.InstrumentModelSourceFromFile"
-		lazy-init="true" />
+	<bean id="defaultInstrumentModelSourceFromFile" class="main.scala.models.InstrumentModelSourceFromFile" 
+		c:f-ref="defaultMLReadableStringBeanFactory" lazy-init="true">
+	</bean>
 
 	<!-- Risk Factor Source From File: Requires a sequence of transformers as 
 		a constructor -->

@@ -4,6 +4,7 @@ import main.scala.models.InstrumentModelSourceFromFile
 import test.scala.application.DITestBase
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import main.scala.application.ApplicationContext
+import org.apache.spark.ml.regression.LinearRegressionModel
 
 class InstrumentModelSourceFromFileWithDITest extends DITestBase {
 
@@ -11,7 +12,7 @@ class InstrumentModelSourceFromFileWithDITest extends DITestBase {
 
   var instance: InstrumentModelSourceFromFile = _
 
-  private var testModel: CrossValidatorModel = _
+  private var testModel: LinearRegressionModel = _
 
   override def beforeAll(): Unit = {
 
@@ -168,7 +169,7 @@ class InstrumentModelSourceFromFileWithDITest extends DITestBase {
 
     val ctx = ApplicationContext.getContext
     val hdsfName = ctx.getString("fs.default.name")
-    CrossValidatorModel.load(s"${hdsfName}/project/test/initial-testing/h-models/models/WIKI_CMC")
+    LinearRegressionModel.load(s"${hdsfName}/project/test/initial-testing/h-models/models/WIKI_CMC")
   }
 
 }

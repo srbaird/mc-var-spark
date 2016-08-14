@@ -7,12 +7,15 @@ import main.scala.application.ApplicationContext
 import main.scala.models.DefaultInstrumentModelGenerator
 import main.scala.prices.InstrumentPriceSourceFromFile
 import main.scala.models.InstrumentModelSourceFromFile
+import main.scala.models.MLReadableStringBeanFactory
 
 class LongRunDefaultInstrumentModelGeneratorWithDITest extends DITestBase {
 
   val instanceBeanName = "defaultDefaultInstrumentModelGenerator"
+  val factoryBeanName = "defaultMLReadableStringBeanFactory"
 
   var instance: DefaultInstrumentModelGenerator = _
+  var factory: MLReadableStringBeanFactory = _
 
   val localApplicationContextFileName = "src/test/scala/models/DefaultInstrumentModelGeneratorApplicationContext"
 
@@ -76,8 +79,6 @@ class LongRunDefaultInstrumentModelGeneratorWithDITest extends DITestBase {
     }
   }
 
-
-
   /**
    * Generating a model with no dataset code prices
    */
@@ -100,7 +101,7 @@ class LongRunDefaultInstrumentModelGeneratorWithDITest extends DITestBase {
     assert(availableCodes.contains(expectedDSCode))
 
     // Remove the model
-    val instrumentModelSource = new InstrumentModelSourceFromFile()
+    val instrumentModelSource = new InstrumentModelSourceFromFile(factory)
     instrumentModelSource.removeModel(expectedDSCode)
     assert(!instrumentModelSource.getAvailableModels.contains(expectedDSCode))
 
@@ -124,7 +125,7 @@ class LongRunDefaultInstrumentModelGeneratorWithDITest extends DITestBase {
     assert(availableCodes.contains(expectedDSCode2))
 
     // Remove the models
-    val instrumentModelSource = new InstrumentModelSourceFromFile()
+    val instrumentModelSource = new InstrumentModelSourceFromFile(factory)
     instrumentModelSource.removeModel(expectedDSCode1)
     instrumentModelSource.removeModel(expectedDSCode2)
     assert(!instrumentModelSource.getAvailableModels.contains(expectedDSCode1))
@@ -148,5 +149,6 @@ class LongRunDefaultInstrumentModelGeneratorWithDITest extends DITestBase {
     super.generateApplicationContext
     ApplicationContext.useConfigFile(new File(localApplicationContextFileName)) // use local version of the application context file
     instance = ctx.getBean(instanceBeanName).asInstanceOf[DefaultInstrumentModelGenerator]
+    factory = ctx.getBean(factoryBeanName).asInstanceOf[MLReadableStringBeanFactory]
   }
 }

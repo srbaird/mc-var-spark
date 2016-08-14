@@ -18,11 +18,13 @@ import org.apache.hadoop.fs.FSDataOutputStream
 import java.io.InputStreamReader
 import com.typesafe.config.ConfigRenderOptions
 import org.apache.spark.ml.regression.LinearRegressionModel
+import main.scala.application.StringBeanFactory
+import org.apache.spark.ml.util.MLReadable
 
 /**
  * Persistence layer using HDFS file system
  */
-class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
+class InstrumentModelSourceFromFile(f:StringBeanFactory[MLReadable[_]]) extends InstrumentModelSource[Model[_]] {
 
   private val appContext = ApplicationContext.getContext
 
@@ -38,7 +40,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
   override def getAvailableModels: Seq[String] = {
 
-    logger.debug("Get available model dataset codes")
+    logger.debug(s"Get available model dataset codes")
 
     // Use the Hadoop configuration from the Application Context rather than the Spark default
     val fs = FileSystem.get(ApplicationContext.getHadoopConfig)
@@ -51,7 +53,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
       val f = files.next().getPath.getName
       val dsCode = FilenameUtils.removeExtension(f)
-      logger.debug("Validate model for dataset code '${dsCode}'")
+      logger.debug(s"Validate model for dataset code '${dsCode}'")
       if (isLoadable(dsCode, fs)) {
         found = found :+ dsCode
       }
@@ -61,7 +63,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
   override def getModel(dsCode: String): Option[Model[_]] = {
 
-    logger.debug("Get model for '${dsCode}'")
+    logger.debug(s"Get model for '${dsCode}'")
     validateDSCode(dsCode)
 
     // Use the Hadoop configuration from the Application Context rather than the Spark default
@@ -71,8 +73,9 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
       // Use the metadata to generate the correct model type
       val metaDataClass = readMetadata(dsCode, fs).getString(metadataClassName)
-
-      Option(loadModel(dsCode, metaDataClass))
+      val model = loadModel(dsCode, metaDataClass)
+            
+     Option[Model[_]](loadModel(dsCode, metaDataClass))
 
     } else {
 
@@ -82,7 +85,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
   override def putModel(dsCode: String, model: Model[_]): Unit = {
 
-    logger.debug("Put ${model} as model for '${dsCode}'")
+    logger.debug(s"Put ${model} as model for '${dsCode}'")
     validateDSCode(dsCode)
 
     if (model == null) {
@@ -112,7 +115,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
 
   override def removeModel(dsCode: String): Unit = {
 
-    logger.debug("Remove the model for '${dsCode}'")
+    logger.debug(s"Remove the model for '${dsCode}'")
     validateDSCode(dsCode)
 
     // Use the Hadoop configuration from the Application Context rather than the Spark default
@@ -150,7 +153,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   //
   private def generateConfig(model: Model[_]): Config = {
 
-    logger.trace("Generate a config from ${model}")
+    logger.trace(s"Generate a config from ${model}")
     val metadata = new HashMap[String, String]() // ConfigFactory requires a Java map
     metadata.put(metadataClassName, model.getClass.getSimpleName) // Simple implementation for the time being
     ConfigFactory.parseMap(metadata)
@@ -161,7 +164,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   //
   private def writeMetadata(dsCode: String, model: Model[_], fs: FileSystem): Boolean = {
 
-    logger.trace("Write the metadata from ${model} for '${dsCode}'")
+    logger.trace(s"Write the metadata from ${model} for '${dsCode}'")
     val os: FSDataOutputStream = try {
 
       fs.create(createMetadataPath(dsCode), true)
@@ -184,7 +187,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   //
   private def readMetadata(dsCode: String, fs: FileSystem): Config = {
 
-    logger.trace("Read the metadata for '${dsCode}'")
+    logger.trace(s"Read the metadata for '${dsCode}'")
     val metaDataInputStream = fs.open(createMetadataPath(dsCode))
     ConfigFactory.parseString(metaDataInputStream.readUTF())
   }
@@ -194,7 +197,7 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   //
   private def deleteMetadata(dsCode: String, fs: FileSystem): Unit = {
 
-    logger.trace("Remove the metadata for '${dsCode}'")
+    logger.trace(s"Remove the metadata for '${dsCode}'")
     fs.delete(createMetadataPath(dsCode), false)
   }
 
@@ -214,10 +217,11 @@ class InstrumentModelSourceFromFile() extends InstrumentModelSource[Model[_]] {
   }
 
   // TODO: replace this with a Factory implementation
-  private def loadModel(dsCode: String, modelClass: String): LinearRegressionModel = {
+  private def loadModel(dsCode: String, modelClass: String): Model[_] = {
 
-    logger.trace("Load a LinearRegression model for '${dsCode}'")
-    LinearRegressionModel.load(createModelPath(dsCode))
+    logger.trace(s"Load a ${modelClass} model for '${dsCode}'")   
+    f.create(modelClass).load(createModelPath(dsCode)).asInstanceOf[Model[_]]
+ //   LinearRegressionModel.load(createModelPath(dsCode))
   }
 
   //

@@ -7,12 +7,14 @@ import java.io.FileNotFoundException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
 import java.io.Reader
+import org.springframework.context.support.GenericApplicationContext
 
 /**
  *
  */
 object ApplicationContext {
 
+  var springApplicationContext:GenericApplicationContext = _
   private var _context: Config = _
 
   private var _sc: SparkContext = _
