@@ -44,6 +44,7 @@ class DITestBase extends SparkTestBase {
     val xmlReader = new XmlBeanDefinitionReader(ctx);
     xmlReader.loadBeanDefinitions(new UrlResource(new URL("file", "", springContextFileName)));
     ctx.refresh();
+    ApplicationContext.springApplicationContext = ctx
     val applicationContextFileNameBeanName = "applicationContextFileName"
     val applicationContextFileName = ctx.getBean(applicationContextFileNameBeanName).asInstanceOf[String]
     // Set the Application Context values

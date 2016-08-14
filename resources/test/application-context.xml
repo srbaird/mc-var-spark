@@ -134,4 +134,24 @@
 		c:pv-ref="defaultPortfolioValuesSourceFromFile" c:pr-ref="defaultInstrumentPriceSourceFromFile"
 		lazy-init="true" />
 
+	<!-- Model MLReadable factory: -->
+	<bean id="defaultMLReadableStringBeanFactory" class="main.scala.models.MLReadableStringBeanFactory"
+		lazy-init="true">
+		<constructor-arg>
+			<map>
+				<entry key="CrossValidatorModel">
+					<value>crossValidatorModel</value>
+				</entry>
+				<entry key="LinearRegressionModel">
+					<value>linearRegressionModel</value>
+				</entry>
+			</map>
+		</constructor-arg>
+	</bean>
+
+	<bean id="crossValidatorModel" class="main.scala.models.GetCrossValidatorModel"
+		lazy-init="true" />
+	<bean id="linearRegressionModel" class="main.scala.models.GetLinearRegressionModel"
+		lazy-init="true" />
+
 </beans>
