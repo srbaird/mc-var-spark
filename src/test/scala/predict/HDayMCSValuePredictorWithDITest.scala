@@ -71,17 +71,22 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
     val result = instance.value(expectedPCode, expectedAtDate)
     val mcsNumIterationsInt = ApplicationContext.getContext.getLong("mcs.mcsNumIterations")
     assert(result.length == mcsNumIterationsInt)
-    
- //   result.foreach(r => println(s"Value: ${r._1} from ${r._2.mkString(", ")}"))
-    
+
+    //   result.foreach(r => println(s"Value: ${r._1} from ${r._2.mkString(", ")}"))
+
     // TODO: check values
-    val sorted =  result.map(p => p._1).sortWith(_ < _) // Sort ascending
-    val index = (sorted.length / 100 ) * (100 - 99) 
+    val sorted = result.map(p => p._1).sortWith(_ < _) // Sort ascending
+    val index = (sorted.length / 100) * (100 - 99)
     println(s"index ${index}  is ${sorted(index)}. ")
-  
+
+    val predictionRange = result.map(p => p._1)
+    val percentile95 = getPercentile(95, predictionRange)
+    println(s"95% probability value is ${percentile95}")
+    val percentile99 = getPercentile(99, predictionRange)
+    println(s"99% probability value is ${percentile99}")
+
   }
 
-  
   //
   //  Helper functions
   //  ****************
@@ -89,5 +94,13 @@ class HDayMCSValuePredictorWithDITest extends DITestBase {
 
     super.generateApplicationContext
     instance = ctx.getBean(instanceBeanName).asInstanceOf[HDayMCSValuePredictor]
+  }
+
+  private def getPercentile(percentile: Double, range: Array[Double]): Double = {
+
+    // TODO: check values
+    val sorted = range.sortWith(_ < _) // Sort ascending
+    val index = (sorted.length / 100) * (100 - percentile).toInt
+    sorted(index)
   }
 }

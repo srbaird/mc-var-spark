@@ -26,9 +26,13 @@ import org.apache.log4j.Logger
 /**
  * For want of a better name, the default model generator for data sets
  */
-class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], val f: RiskFactorSource[DataFrame], val m: InstrumentModelSource[Model[_]], val t: Seq[Transformer]) extends InstrumentModelGenerator {
+class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], 
+    val f: RiskFactorSource[DataFrame], 
+    val m: InstrumentModelSource[Model[_]], 
+    val e: main.scala.models.ModelEstimator, 
+    val t: Seq[Transformer]) extends InstrumentModelGenerator {
 
-  def this() = this(null, null, null, Array[Transformer]())
+  def this() = this(null, null, null, null, Array[Transformer]())
   //
   // For the implementation of Transformable
   //
@@ -49,7 +53,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
 
   def hasSources: Boolean = {
 
-    (f != null && p != null && m != null)
+    (f != null && p != null && m != null && e != null)
   }
 
   override def buildModel(from: LocalDate, to: LocalDate, dsCodes: Seq[String]): Map[String, (Boolean, String)] = {
@@ -167,83 +171,22 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
     logger.trace(s"Fit model for '${dsCode}' ")
     // get the estimator
     try {
-      val e = getModelEstimator(trainDF)
-      // rename the training dataframe column
-      val regressionDF = trainDF.withColumnRenamed(getlabelColumn, modelLabelColumn)
+      // Assemble all the risk factors into a feature Vector
+      val estimatorDF = new VectorAssembler()
+        .setInputCols(trainDF.columns.diff(Array[String](getkeyColumn, getlabelColumn))) // Remove label column and date
+        .setOutputCol("features")
+        .transform(trainDF)
+      val estimator = e.get
+      // rename the training dataframe columns
+      val regressionDF = estimatorDF.withColumnRenamed(getlabelColumn, modelLabelColumn)
       // fit the data
-      //      val model = e.fit(regressionDF)
-      // TEMP TEMP 
-      val model = tryLinearRegressionOnly(regressionDF)
-      // End of TEMP
-      //     generateMetadata(dsCode, regressionDF, model)
+      val model = estimator.fit(regressionDF)
+      generateMetadata(dsCode, regressionDF, model.asInstanceOf[Model[_]])
       // persist the model
       persistTheModel(dsCode, model)
     } catch {
       case allExceptions: Throwable => return (false, s"Failed to generate a model: ${allExceptions.getMessage}")
     }
-  }
-
-  //
-  //  Returns a CrossValidator as an estimator
-  //
-  private def getModelEstimator(trainDF: DataFrame): Estimator[_] = {
-
-    logger.trace(s"Create a Cross Validator estimator ")
-
-    val assembler = new VectorAssembler()
-      .setInputCols(trainDF.columns.diff(Array[String](getkeyColumn, getlabelColumn))) // Remove label column and date
-      .setOutputCol("features")
-
-    val lr = new LinearRegression()
-    val pipeline = new Pipeline().setStages(Array(assembler, lr))
-
-    val paramGrid = new ParamGridBuilder()
-      .addGrid(lr.fitIntercept, Array(true, false))
-      .addGrid(lr.standardization, Array(true, false))
-      .addGrid(lr.regParam, Array(0.1, 0.01))
-      .build()
-
-    new CrossValidator()
-      .setEstimator(pipeline)
-      .setEstimatorParamMaps(paramGrid)
-      .setEvaluator(new RegressionEvaluator)
-      .setNumFolds(5) // Use 'Magic' value = 5
-  }
-
-  //
-  // 
-  //
-  private def tryLinearRegressionOnly(trainDF: DataFrame): Model[_] = {
-
-    logger.trace(s"Create a Linear Regression estimator ")
-
-    val assembler = new VectorAssembler()
-      .setInputCols(trainDF.columns.diff(Array[String](modelLabelColumn, getlabelColumn, getkeyColumn))) // Remove label column and date
-      .setOutputCol("features")
-
-    val lir = new LinearRegression()
-      .setFeaturesCol("features")
-      .setLabelCol(modelLabelColumn)
-      .setRegParam(0.15)
-      .setElasticNetParam(0.0)
-      .setMaxIter(100)
-      .setTol(1E-6)
-
-    // Train the model
-    val training = assembler.transform(trainDF)
-    val startTime = System.nanoTime()
-    val lirModel = lir.fit(training)
-    val elapsedTime = (System.nanoTime() - startTime) / 1e9
-    logger.debug(s"Training time: ${elapsedTime} seconds")
-
-    val summary = lirModel.evaluate(training)
-
-    println(s"Summary. MSE: ${summary.meanSquaredError} r-squared: ${summary.r2}")
-
-    //    val result = lirModel.transform(training).select("label", "prediction")
-    //    result.show()
-    lirModel
-
   }
 
   //
@@ -265,7 +208,7 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame], v
     logger.trace(s"Generate metadata from ${df} for '${dsCode}' ")
     val result = model.transform(df).select("label", "prediction")
     result.show()
-    val resultAsArray = dfToArrayMatrix(df).map { row => (row(0), row(1)) }
+    val resultAsArray = dfToArrayMatrix(result).map { row => (row(0), row(1)) }
     val metrics = new RegressionMetrics(sc.parallelize(resultAsArray))
     logger.info(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")
   }

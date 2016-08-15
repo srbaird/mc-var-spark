@@ -24,7 +24,7 @@ import org.apache.spark.ml.util.MLReadable
 /**
  * Persistence layer using HDFS file system
  */
-class InstrumentModelSourceFromFile(f:StringBeanFactory[MLReadable[_]]) extends InstrumentModelSource[Model[_]] {
+class InstrumentModelSourceFromFile(f: StringBeanFactory[MLReadable[_]]) extends InstrumentModelSource[Model[_]] {
 
   private val appContext = ApplicationContext.getContext
 
@@ -72,10 +72,16 @@ class InstrumentModelSourceFromFile(f:StringBeanFactory[MLReadable[_]]) extends 
     if (isLoadable(dsCode, fs)) {
 
       // Use the metadata to generate the correct model type
+      val es = readMetadata(dsCode, fs).entrySet().iterator()
+      while (es.hasNext()) {
+        val n = es.next()
+        println(s"Entry ${n.getKey}: ${n.getValue}")
+      }
+      
       val metaDataClass = readMetadata(dsCode, fs).getString(metadataClassName)
       val model = loadModel(dsCode, metaDataClass)
-            
-     Option[Model[_]](loadModel(dsCode, metaDataClass))
+
+      Option[Model[_]](loadModel(dsCode, metaDataClass))
 
     } else {
 
@@ -219,9 +225,9 @@ class InstrumentModelSourceFromFile(f:StringBeanFactory[MLReadable[_]]) extends 
   // TODO: replace this with a Factory implementation
   private def loadModel(dsCode: String, modelClass: String): Model[_] = {
 
-    logger.trace(s"Load a ${modelClass} model for '${dsCode}'")   
+    logger.trace(s"Load a ${modelClass} model for '${dsCode}'")
     f.create(modelClass).load(createModelPath(dsCode)).asInstanceOf[Model[_]]
- //   LinearRegressionModel.load(createModelPath(dsCode))
+    //   LinearRegressionModel.load(createModelPath(dsCode))
   }
 
   //

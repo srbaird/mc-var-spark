@@ -48,7 +48,7 @@
 	</bean>
 
 	<!-- Instrument Model Source From File -->
-	<bean id="defaultInstrumentModelSourceFromFile" class="main.scala.models.InstrumentModelSourceFromFile" 
+	<bean id="defaultInstrumentModelSourceFromFile" class="main.scala.models.InstrumentModelSourceFromFile"
 		c:f-ref="defaultMLReadableStringBeanFactory" lazy-init="true">
 	</bean>
 
@@ -68,7 +68,11 @@
 	<bean id="defaultDefaultInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
 		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
 		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="emptyInstrumentModelGeneratorTransformerList"
-		lazy-init="true" />
+		c:e-ref="defaultModelEstimator" lazy-init="true" />
+
+	<bean id="defaultModelEstimator" class="main.scala.models.TrainValidationSplitEstimator"
+		scope="prototype" lazy-init="true" />
+
 
 	<!-- Empty list of transformers -->
 	<util:list id="emptyInstrumentModelGeneratorTransformerList" />
@@ -76,8 +80,8 @@
 	<!-- H-Day Instrument Model Generator: Compose from tested elements -->
 	<bean id="hDayInstrumentModelGenerator" class="main.scala.models.DefaultInstrumentModelGenerator"
 		c:p-ref="defaultInstrumentPriceSourceFromFile" c:f-ref="defaultRiskFactorSourceFromFile"
-		c:m-ref="defaultInstrumentModelSourceFromFile" c:t-ref="hDayInstrumentModelGeneratorTransformerList"
-		lazy-init="true" />
+		c:m-ref="defaultInstrumentModelSourceFromFile" c:e-ref="defaultModelEstimator"
+		c:t-ref="hDayInstrumentModelGeneratorTransformerList" lazy-init="true" />
 
 	<!-- Add transformers to generate a matrix of Doubles and perform h-day 
 		variance -->
@@ -146,6 +150,9 @@
 				<entry key="LinearRegressionModel">
 					<value>linearRegressionModel</value>
 				</entry>
+				<entry key="TrainValidationSplitModel">
+					<value>trainValidationSplitModel</value>
+				</entry>
 			</map>
 		</constructor-arg>
 	</bean>
@@ -153,6 +160,8 @@
 	<bean id="crossValidatorModel" class="main.scala.models.GetCrossValidatorModel"
 		lazy-init="true" />
 	<bean id="linearRegressionModel" class="main.scala.models.GetLinearRegressionModel"
+		lazy-init="true" />
+	<bean id="trainValidationSplitModel" class="main.scala.models.GetTrainValidationSplitModel"
 		lazy-init="true" />
 
 </beans>
