@@ -207,7 +207,6 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame],
 
     logger.trace(s"Generate metadata from ${df} for '${dsCode}' ")
     val result = model.transform(df).select("label", "prediction")
-    result.show()
     val resultAsArray = dfToArrayMatrix(result).map { row => (row(0), row(1)) }
     val metrics = new RegressionMetrics(sc.parallelize(resultAsArray))
     logger.info(s"${dsCode}: MSE = ${metrics.meanSquaredError}, Variance = ${metrics.explainedVariance}, R-Squared = ${metrics.r2}")

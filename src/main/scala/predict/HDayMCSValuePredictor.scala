@@ -24,7 +24,10 @@ import org.apache.spark.rdd.RDD
 /**
  * Implement ValuePredictor to return a portfolio value using Monte Carlo simulation with h-day covariance matrix
  */
-class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSource[DataFrame], c: CorrelatedSampleGenerator, m: InstrumentModelSource[Model[_]])
+class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], 
+    f: RiskFactorSource[DataFrame], 
+    c: CorrelatedSampleGenerator, 
+    m: InstrumentModelSource[Model[_]])
     extends ValueGenerator {
 
   val appContext = ApplicationContext.getContext
@@ -32,7 +35,6 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], f: RiskFactorSo
   val sc = ApplicationContext.sc
 
   lazy val mcsNumIterations = appContext.getLong("mcs.mcsNumIterations")
-//  lazy val mcsNumIterations = 10L
   lazy val instrumentColumn = appContext.getString("portfolioHolding.instrumentColumn")
   lazy val valueColumn = appContext.getString("portfolioHolding.valueColumn")
   lazy val predictionColumn = appContext.getString("instrumentModel.predictionColumn")

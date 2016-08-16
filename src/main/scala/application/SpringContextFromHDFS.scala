@@ -23,6 +23,7 @@ trait SpringContextFromHDFS {
     val is = fs.open(new Path(location))
     xmlReader.loadBeanDefinitions(new InputStreamResource(is));
     ctx.refresh();
+    ApplicationContext.springApplicationContext = ctx
     ctx
   }
 }

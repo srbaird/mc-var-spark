@@ -27,7 +27,7 @@ class TrainValidationSplitEstimator extends ModelEstimator {
       .addGrid(lr.standardization, Array(true, false))
       .addGrid(lr.regParam, Array(0.1, 0.01))
       .addGrid(lr.elasticNetParam, Array(0.1, 0.01))
-      .addGrid(lr.maxIter, Array(100))
+      .addGrid(lr.maxIter, Array(500))
       .addGrid(lr.tol, Array(1E-6))
       .build()
 
