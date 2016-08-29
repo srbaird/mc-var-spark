@@ -27,7 +27,7 @@ class TrainValidationSplitEstimator extends ModelEstimator {
       .addGrid(lr.standardization, Array(true, false))
       .addGrid(lr.regParam, Array(0.1, 0.01))
       .addGrid(lr.elasticNetParam, Array(0.1, 0.01))
-      .addGrid(lr.maxIter, Array(500))
+      .addGrid(lr.maxIter, Array(100))
       .addGrid(lr.tol, Array(1E-6))
       .build()
 
@@ -35,9 +35,6 @@ class TrainValidationSplitEstimator extends ModelEstimator {
       .setEstimator(lr)
       .setEvaluator(new RegressionEvaluator)
       .setEstimatorParamMaps(paramGrid)
-      // 80% of the data will be used for training and the remaining 20% for validation.
-      .setTrainRatio(0.8)
-      
-  }
-  
+      .setTrainRatio(0.8)      
+  }  
 }

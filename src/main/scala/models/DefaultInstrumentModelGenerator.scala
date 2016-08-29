@@ -33,10 +33,6 @@ class DefaultInstrumentModelGenerator(val p: InstrumentPriceSource[DataFrame],
     val t: Seq[Transformer]) extends InstrumentModelGenerator {
 
   def this() = this(null, null, null, null, Array[Transformer]())
-  //
-  // For the implementation of Transformable
-  //
-  private var transformers = Vector[Transformer]()
 
   private val noFactorsMsg = "No risk factors data was found"
   private val noPricesMsg = "No price data found"

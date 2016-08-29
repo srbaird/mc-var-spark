@@ -84,6 +84,7 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
     logger.info(s"Completed h-day MCS VaR run. Prediction took ${predictionEndTime - predictionStartTime}(ms)")
   }
+  
   private def getPercentile(percentile: Double, range: Array[Double]): Double = {
 
     // TODO: check values
