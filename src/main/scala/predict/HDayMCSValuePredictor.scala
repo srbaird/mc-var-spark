@@ -24,10 +24,10 @@ import org.apache.spark.rdd.RDD
 /**
  * Implement ValuePredictor to return a portfolio value using Monte Carlo simulation with h-day covariance matrix
  */
-class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame], 
-    f: RiskFactorSource[DataFrame], 
-    c: CorrelatedSampleGenerator, 
-    m: InstrumentModelSource[Model[_]])
+class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame],
+  f: RiskFactorSource[DataFrame],
+  c: CorrelatedSampleGenerator,
+  m: InstrumentModelSource[Model[_]])
     extends ValueGenerator {
 
   val appContext = ApplicationContext.getContext
@@ -41,14 +41,12 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame],
 
   lazy val priceValueColumn = appContext.getString("instrumentPrice.valueColumn")
   lazy val priceKeyColumn = appContext.getString("instrumentPrice.keyColumn")
+
+  lazy val indexColumn = "Index"
   //
   //
   //
   private val logger = Logger.getLogger(getClass)
-  //
-  // TODO: Move this to the application context file
-  //
-  private val indexColumn = "Index"
 
   /**
    *
@@ -109,6 +107,7 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame],
     val correlatedSamplesWithIndexSchema = new StructType(correlationFactors.schema.toArray :+ StructField(indexColumn, DataTypes.DoubleType))
 
     val sqlc = new SQLContext(sc)
+    import sqlc.implicits._
 
     val correlatedSamplesAsRDDOfRows = sc.parallelize(correlatedSamplesWithIndex.map { a => Row.fromSeq(a) })
     val correlatedSamplesAsDF = sqlc.createDataFrame(correlatedSamplesAsRDDOfRows, correlatedSamplesWithIndexSchema)
@@ -133,11 +132,19 @@ class HDayMCSValuePredictor(p: PortfolioValuesSource[DataFrame],
       logger.trace(s"Generate sample predictions for '${dsCode}'")
 
       // Apply the model to the generated samples
+      val modelStartTime = System.currentTimeMillis()
+      val model = m.getModel(dsCode).get
+      val modelEndTime = System.currentTimeMillis()
+      logger.debug(s"Loading the model took ${modelEndTime - modelStartTime}(ms)")
+
       val predictionStartTime = System.currentTimeMillis()
-      val predictions = dfToArrayMatrix(m.getModel(dsCode).get.transform(featuresDF).select(predictionColumn, indexColumn))
+      val predictions = model.transform(featuresDF).select(predictionColumn, indexColumn)
+        .map { row:Row => Array[Double](row.getDouble(0), row.getDouble(1)) }.collect()
+
       val predictionEndTime = System.currentTimeMillis()
+
       logger.info(s"Predicting '${dsCode} for ${mcsNumIterations}' iterations took ${predictionEndTime - predictionStartTime}(ms)")
-      
+
       // Accumulate the results by index
       accumulatedResults = predictions.map { p => p(1) -> addResultToMap(accumulatedResults, p, dsCode, holding) }(scala.collection.breakOut)
     }

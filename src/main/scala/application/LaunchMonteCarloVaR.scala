@@ -12,7 +12,7 @@ object LaunchMonteCarloVaR extends PreLoadHadoopConfig {
     val spark = SparkSession
       .builder()
       .appName("H-Day MonteCarlo VaR")
-      .master("local[3]")
+      .master("local[4]")
 //      .master("local")
       .getOrCreate()
 

@@ -15,7 +15,8 @@ object Functions {
    */
   def dfToArrayMatrix(df: DataFrame): Array[Array[Double]] = {
 
-    df.collect.toArray.map { row => row.toSeq.toArray.map { x => toDouble(x).asInstanceOf[Double] } }
+    df.rdd.map { row => row.toSeq.toArray.map { x => toDouble(x).asInstanceOf[Double] } }.collect
+
   }
 
   /**

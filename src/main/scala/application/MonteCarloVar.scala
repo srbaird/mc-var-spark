@@ -14,6 +14,7 @@ import org.springframework.core.io.UrlResource
 import main.scala.predict.PredictionPersistor
 import org.apache.spark.sql.SparkSession
 import main.scala.predict.ValueGenerator
+import collection.JavaConversions._
 
 object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
 
@@ -66,6 +67,7 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     val sortedPrediction = prediction.sortBy(f => f._1)
  
     // Write percentile values
+    val percentilesList = ApplicationContext.getContext.getLongList("valueAtRisk.writePercentilesList").toList
     val persistorBeanName = ApplicationContext.getContext.getString("springFramework.persistorBeanName")
     logger.debug(s"Persistor bean name is '${persistorBeanName}'")
     val writer = ctx.getBean(persistorBeanName).asInstanceOf[PredictionPersistor]
@@ -74,13 +76,20 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     val predictionRange = prediction.map(p => p._1)
 
     val hValue = ApplicationContext.getContext.getLong("hDayVolatility.hDayValue")
-    val percentile95 = getPercentile(95, predictionRange)
-    logger.info(s"Write 95% probability value of ${percentile95}")
-    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, percentile95)
+    
+    percentilesList.foreach { x => 
+      val p = getPercentile(x.toDouble, predictionRange)
+      logger.info(s"Write ${x}% probability value of ${p}")
+      writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, x.toDouble, p)
+    }
+    
+//    val percentile95 = getPercentile(95, predictionRange)
+//    logger.info(s"Write 95% probability value of ${percentile95}")
+//    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 95, percentile95)
 
-    val percentile99 = getPercentile(99, predictionRange)
-    logger.info(s"Write 99% probability value of ${percentile99}")
-    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, percentile99)
+//    val percentile99 = getPercentile(99, predictionRange)
+//    logger.info(s"Write 99% probability value of ${percentile99}")
+//    writer.persist(portfolioName, valueAtDate, predictor.getClass.getSimpleName, hValue, 99, percentile99)
 
     logger.info(s"Completed h-day MCS VaR run. Prediction took ${predictionEndTime - predictionStartTime}(ms)")
   }
@@ -92,5 +101,7 @@ object MonteCarloVar extends ConfigFromHDFS with SpringContextFromHDFS {
     val index = (sorted.length / 100) * (100 - percentile).toInt
     sorted(index)
   }
+  
+
 
 }

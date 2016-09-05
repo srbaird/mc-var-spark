@@ -9,7 +9,6 @@ import org.apache.spark.mllib.linalg.DenseMatrix
 import org.apache.spark.mllib.linalg.MatrixUDT
 import org.apache.spark.sql.types.SQLUserDefinedType
 
-
 class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends CorrelatedSampleGenerator {
 
   //
@@ -49,7 +48,10 @@ class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends Correlate
     // Generate n x numOfFactors matrix of random samples
     //
     logger.trace(s"Generate the observations")
-    val observations = r.randomMatrix(n, numOfFactors.toLong)    
+    val obsStartTime = System.currentTimeMillis()
+    val observations = r.randomMatrix(n, numOfFactors.toLong)
+    val obsEndTime = System.currentTimeMillis()
+    logger.info(s"Generating observations took ${obsEndTime-obsStartTime}(ms)")
     //
     // Convert to Matrix for multiplication
     //
@@ -57,8 +59,8 @@ class CholeskyCorrelatedSampleGenerator(r: RandomDoubleSource) extends Correlate
     //
     // Multiply and return the resulting Array
     //
-    val decompositionAsMatrix = new DenseMatrix(decomposition.getRowDimension, decomposition.getColumnDimension, decomposition.getData.flatten) 
-    
+    val decompositionAsMatrix = new DenseMatrix(decomposition.getRowDimension, decomposition.getColumnDimension, decomposition.getData.flatten)
+
     observationsAsMatrix.multiply(decomposition).getData
   }
 }
