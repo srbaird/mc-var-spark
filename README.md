@@ -45,7 +45,7 @@ The following is a high level illustration of the project structure and the comp
 
 ___
 
-Example input data files may be found [here](https://github.com/srbaird/mc-var-spark-resources/tree/master/data). 
+Example input data files may be found [here](https://github.com/srbaird/mc-var-spark-resources/tree/master/data) and the R scripts to format the data are [here](https://github.com/srbaird/mc-var-spark-resources/tree/master/r-analysis).
 
 
 
