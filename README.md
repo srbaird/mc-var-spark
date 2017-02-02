@@ -11,7 +11,7 @@ The following illustrates the improvements in accuracy obtained by using the Mon
 
 
 <p align="center">
-<img src="https://github.com/srbaird/mc-var-spark/blob/master/documents/VaRMethodsComparison.jpg" alt="Var Methods Comparison"  >
+<img src="https://github.com/srbaird/mc-var-spark/blob/master/documents/VaRMethodsComparison.png" alt="Var Methods Comparison"  >
 </p>
 
 ___
@@ -40,7 +40,7 @@ ___
 The following is a high level illustration of the project structure and the composition can be best described in the [Spring context file](https://github.com/srbaird/releases/blob/master/mcs-var-spark/1.2.0/application-context.xml)
 
 <p align="center">
-<img src="https://github.com/srbaird/mc-var-spark/blob/master/documents/VaRMethodsComparison.jpg" alt="High Level View"  >
+<img src="https://github.com/srbaird/mc-var-spark/blob/master/documents/HighLevelView.jpg" alt="High Level View"  >
 </p>
 
 ___
